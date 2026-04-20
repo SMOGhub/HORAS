@@ -1,0 +1,31 @@
+{
+  "name": "HoraFlex",
+  "short_name": "HoraFlex",
+  "description": "Suivi des heures de travail pour techniciens HVAC — Région Liégeoise",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0C0C0F",
+  "theme_color": "#FF6200",
+  "start_url": "/HORAS/",
+  "scope": "/HORAS/",
+  "lang": "fr",
+  "categories": [
+    "productivity",
+    "utilities",
+    "business"
+  ],
+  "icons": [
+    {
+      "src": "https://smoghub.github.io/HORAS/ic%C3%B4ne.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://smoghub.github.io/HORAS/ic%C3%B4ne.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

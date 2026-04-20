@@ -9,35 +9,19 @@
   "start_url": "/HORAS/",
   "scope": "/HORAS/",
   "lang": "fr",
+  "categories": ["productivity", "utilities", "business"],
   "icons": [
     {
-      "src": "ic%C3%B4ne.png",
+      "src": "https://smoghub.github.io/HORAS/ic%C3%B4ne.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "ic%C3%B4ne.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icône.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icône.png",
+      "src": "https://smoghub.github.io/HORAS/ic%C3%B4ne.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "categories": [
-    "productivity",
-    "utilities",
-    "business"
   ]
 }

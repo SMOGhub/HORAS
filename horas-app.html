@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HORAS — Gestion BTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0F2240;--navy2:#1A3A6B;--navy3:#1E4D8C;
+  --amber:#F59E0B;--amber2:#FCD34D;
+  --green:#10B981;--red:#EF4444;--orange:#F97316;--purple:#8B5CF6;
+  --g50:#F8FAFC;--g100:#F1F5F9;--g200:#E2E8F0;--g300:#CBD5E1;
+  --g400:#94A3B8;--g500:#64748B;--g700:#334155;--g800:#1E293B;
+  --sw:240px;--sh:60px;--r:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.06);
+  --shadow-md:0 4px 20px rgba(0,0,0,.13);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--g50);color:var(--g800);font-size:14px;line-height:1.5}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 60%,#0a1628 100%);display:flex;align-items:center;justify-content:center;z-index:1000;transition:opacity .4s}
+#login-screen.hidden{opacity:0;pointer-events:none}
+.login-card{background:#fff;border-radius:16px;padding:40px;width:400px;box-shadow:0 24px 64px rgba(0,0,0,.3)}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.login-logo-icon{width:44px;height:44px;background:var(--amber);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:var(--navy)}
+.login-logo-text{font-size:26px;font-weight:800;color:var(--navy)}
+.login-tagline{font-size:13px;color:var(--g400);margin-bottom:28px}
+.login-label{display:block;font-size:12px;font-weight:500;color:var(--g700);margin-bottom:4px;margin-top:14px}
+.login-input{width:100%;padding:10px 14px;border:1.5px solid var(--g200);border-radius:8px;font-size:14px;outline:none;transition:border-color .15s;font-family:inherit}
+.login-input:focus{border-color:var(--navy3);box-shadow:0 0 0 3px rgba(30,77,140,.1)}
+.login-btn{width:100%;padding:11px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:20px;transition:background .15s;font-family:inherit}
+.login-btn:hover{background:var(--navy2)}
+.login-link{text-align:center;margin-top:14px;font-size:12px;color:var(--g400)}
+.login-link a{color:var(--amber);font-weight:500;text-decoration:none}
+
+/* ── APP SHELL ── */
+#app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sw);background:var(--navy);color:#fff;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb-logo{height:var(--sh);display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+.sb-logo-icon{width:30px;height:30px;background:var(--amber);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--navy)}
+.sb-logo-text{font-weight:700;font-size:17px;letter-spacing:.3px}
+.sb-logo-badge{font-size:9px;background:rgba(245,158,11,.18);color:var(--amber2);padding:1px 6px;border-radius:20px;margin-left:2px;letter-spacing:1px}
+.sb-section{padding:14px 12px 2px;font-size:10px;font-weight:600;letter-spacing:1.2px;color:rgba(255,255,255,.3);text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:1px 0;border-radius:7px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;font-weight:500;transition:all .15s;user-select:none}
+.sb-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.sb-item.active{background:rgba(245,158,11,.14);color:var(--amber2)}
+.sb-item.active .sb-icon{color:var(--amber)}
+.sb-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--amber);color:var(--navy);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sb-footer{margin-top:auto;padding:14px 12px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:8px;border-radius:7px;cursor:pointer;transition:background .15s}
+.sb-user:hover{background:rgba(255,255,255,.07)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{height:var(--sh);background:#fff;border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600;color:var(--g800)}
+.topbar-sub{font-size:12px;color:var(--g400);margin-left:2px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}.page.active{display:block}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--navy2)}
+.btn-amber{background:var(--amber);color:var(--navy);font-weight:600}.btn-amber:hover{background:var(--amber2)}
+.btn-ghost{background:transparent;color:var(--g500);border:1px solid var(--g200)}.btn-ghost:hover{background:var(--g100)}
+.btn-red{background:#FEE2E2;color:var(--red);border:1px solid #FECACA}.btn-red:hover{background:#FECACA}
+.icon-btn{width:34px;height:34px;border-radius:7px;border:1px solid var(--g200);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--g500);transition:all .15s}
+.icon-btn:hover{background:var(--g100)}
+.notif{position:relative}.notif::after{content:'';position:absolute;top:4px;right:4px;width:7px;height:7px;background:var(--amber);border-radius:50%;border:2px solid #fff}
+
+/* ── AVATAR ── */
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;flex-shrink:0;background:var(--amber);color:var(--navy)}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.kpi{background:#fff;border-radius:var(--r);padding:18px 20px;border:1px solid var(--g200);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-b::before{background:var(--navy)}.kpi-a::before{background:var(--amber)}.kpi-g::before{background:var(--green)}.kpi-o::before{background:var(--orange)}
+.kpi-label{font-size:11px;color:var(--g400);font-weight:500;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.kpi-val{font-size:24px;font-weight:700;color:var(--g800);line-height:1;margin-bottom:5px}
+.kpi-trend{font-size:12px}.kpi-up{color:var(--green)}.kpi-down{color:var(--red)}.kpi-warn{color:var(--orange)}
+.kpi-icon{position:absolute;right:16px;top:16px;font-size:22px;opacity:.1}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--g200)}
+.card-hd{padding:14px 18px;border-bottom:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13.5px;font-weight:600;color:var(--g800)}
+.card-body{padding:18px}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10.5px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.6px;padding:9px 14px;border-bottom:1px solid var(--g100);background:var(--g50);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--g100);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--g50)}
+.tlink{color:var(--navy2);font-weight:500;cursor:pointer}.tlink:hover{text-decoration:underline}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.7;flex-shrink:0}
+.b-green{background:#D1FAE5;color:#065F46}.b-amber{background:#FEF3C7;color:#92400E}
+.b-blue{background:#DBEAFE;color:#1E40AF}.b-gray{background:var(--g100);color:var(--g500)}
+.b-red{background:#FEE2E2;color:#991B1B}.b-orange{background:#FFEDD5;color:#9A3412}
+.b-purple{background:#EDE9FE;color:#5B21B6}
+
+/* ── PROGRESS ── */
+.prog{height:5px;background:var(--g100);border-radius:4px;overflow:hidden;min-width:60px}
+.prog-bar{height:100%;border-radius:4px;transition:width .6s}
+.pg{background:var(--green)}.pa{background:var(--amber)}.pb{background:var(--navy3)}.pr{background:var(--red)}
+
+/* ── GRID HELPERS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g31{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}.mb4{margin-bottom:16px}.mb6{margin-bottom:24px}
+.mt4{margin-top:16px}.mt6{margin-top:24px}
+.flex{display:flex}.fac{align-items:center}.fjb{justify-content:space-between}.gap2{gap:8px}.gap3{gap:12px}
+.fw6{font-weight:600}.fw7{font-weight:700}.fs12{font-size:12px}.fs11{font-size:11px}
+.c400{color:var(--g400)}.c500{color:var(--g500)}.cg{color:var(--green)}.cr{color:var(--red)}.ca{color:var(--amber)}.co{color:var(--orange)}
+
+/* ── SECTION HEADER ── */
+.sh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.sh-title{font-size:16px;font-weight:700;color:var(--g800)}
+.sh-sub{font-size:12.5px;color:var(--g400);margin-top:2px}
+
+/* ── ALERT ── */
+.alert{padding:11px 15px;border-radius:8px;font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:9px}
+.al-warn{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E}
+.al-info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
+.al-ok{background:#F0FDF4;border:1px solid #BBF7D0;color:#065F46}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;background:var(--g100);padding:3px;border-radius:8px;margin-bottom:18px;width:fit-content}
+.tab{padding:5px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--g500);cursor:pointer;transition:all .15s}
+.tab.active{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+
+/* ── FORM ── */
+.fg{margin-bottom:14px}.fl{display:block;font-size:12px;font-weight:500;color:var(--g700);margin-bottom:4px}
+.fc{width:100%;padding:8px 12px;border:1.5px solid var(--g200);border-radius:7px;font-size:13.5px;color:var(--g800);background:#fff;transition:border-color .15s;outline:none;font-family:inherit}
+.fc:focus{border-color:var(--navy3);box-shadow:0 0 0 3px rgba(30,77,140,.08)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;padding:20px}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:14px;padding:24px;width:580px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-md);transform:translateY(10px);transition:transform .2s}
+.overlay.open .modal{transform:translateY(0)}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:6px;background:var(--g100);border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--g500)}
+.modal-close:hover{background:var(--g200)}
+
+/* ── DEVIS LINES ── */
+.dl-hd{display:grid;grid-template-columns:3fr 70px 100px 90px 20px;gap:6px;font-size:10.5px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.5px;padding:6px 0;border-bottom:1px solid var(--g200)}
+.dl{display:grid;grid-template-columns:3fr 70px 100px 90px 20px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--g100)}
+.dl:last-child{border-bottom:none}
+.dl-sect{background:var(--g50);padding:7px 10px;border-radius:6px;margin:8px 0 3px;font-weight:600;color:var(--g700);font-size:12.5px;display:flex;justify-content:space-between}
+.dl-totals{display:flex;justify-content:flex-end;gap:36px;padding:12px 0 2px;border-top:2px solid var(--g200);margin-top:6px}
+.dl-tl{font-size:12px;color:var(--g500);margin-bottom:2px}
+.dl-tv{font-weight:600;font-size:14px;color:var(--g800);text-align:right}
+.dl-main{font-size:17px;font-weight:800;color:var(--navy)}
+.di{width:100%;padding:5px 8px;border:1.5px solid var(--g200);border-radius:5px;font-size:12.5px;font-family:inherit;outline:none;background:#fff}
+.di:focus{border-color:var(--navy3)}
+
+/* ── AI BLOCK ── */
+.ai-box{background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border:1px solid #C7D2FE;border-radius:10px;padding:12px 14px;margin:12px 0}
+.ai-tag{display:inline-flex;align-items:center;gap:3px;background:#6366F1;color:#fff;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;margin-bottom:5px}
+
+/* ── CHANTIER CARDS ── */
+.ch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.ch-card{background:#fff;border-radius:var(--r);border:1px solid var(--g200);box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:box-shadow .15s,transform .15s}
+.ch-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.ch-hd{padding:13px 15px;border-bottom:1px solid var(--g100)}
+.ch-name{font-weight:600;font-size:13.5px;margin-bottom:1px}
+.ch-client{font-size:11.5px;color:var(--g400)}
+.ch-body{padding:13px 15px}
+.marge-box{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:7px;margin:10px 0}
+.mg-ok{background:#F0FDF4;border:1px solid #BBF7D0}
+.mg-warn{background:#FFFBEB;border:1px solid #FDE68A}
+.mg-bad{background:#FEF2F2;border:1px solid #FECACA}
+.ch-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.ch-meta-i{font-size:11.5px;color:var(--g500);display:flex;align-items:center;gap:3px}
+
+/* ── PLANNING ── */
+.plan-grid{display:grid;grid-template-columns:130px repeat(5,1fr);gap:3px;font-size:12px}
+.plan-hd{font-size:10.5px;font-weight:600;color:var(--g400);text-align:center;padding:5px 3px;text-transform:uppercase;letter-spacing:.5px}
+.plan-name{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:12.5px}
+.plan-cell{height:34px;border-radius:5px;display:flex;align-items:center;justify-content:center}
+.pc-txt{padding:0 6px;color:#fff;font-size:10.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center}
+.pc-e{background:var(--g100)}
+.pc0{background:#3B82F6}.pc1{background:#10B981}.pc2{background:#F59E0B}.pc3{background:#8B5CF6}.pc4{background:#EC4899}.pc5{background:#14B8A6}
+
+/* ── MOBILE FRAME ── */
+.mob-wrap{display:flex;gap:24px;align-items:flex-start}
+.mob-frame{width:300px;flex-shrink:0;background:#1C1C1E;border-radius:44px;padding:10px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.mob-screen{background:#fff;border-radius:36px;overflow:hidden;height:580px;position:relative}
+.mob-status{height:26px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:10px;color:rgba(255,255,255,.8)}
+.mob-body{height:calc(100% - 26px - 52px);overflow-y:auto}
+.mob-nav{height:52px;background:#fff;border-top:1px solid var(--g200);display:flex;justify-content:space-around;align-items:center;position:absolute;bottom:0;left:0;right:0}
+.mob-nav-i{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:9px;color:var(--g400);cursor:pointer;padding:4px 10px;border-radius:7px}
+.mob-nav-i.act{color:var(--navy)}
+.mob-ni{font-size:16px}
+.mob-hd{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:14px}
+.mob-hd-title{font-size:16px;font-weight:700}
+.mob-hd-sub{font-size:11.5px;opacity:.65;margin-top:1px}
+.mob-sec{padding:11px 13px}
+.mob-sec-title{font-size:10.5px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+.mob-card{background:var(--g50);border-radius:11px;padding:11px 13px;margin-bottom:7px;border:1px solid var(--g200)}
+.mob-big-btn{border-radius:13px;padding:14px;margin:10px 13px;text-align:center;font-weight:700;font-size:15px;cursor:pointer;transition:all .2s}
+.mob-btn-default{background:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(15,34,64,.3)}
+.mob-btn-done{background:var(--green);color:#fff;box-shadow:0 4px 12px rgba(16,185,129,.3)}
+.mob-qa{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 13px}
+.mob-qa-i{background:var(--g50);border:1px solid var(--g200);border-radius:11px;padding:11px;text-align:center;cursor:pointer;transition:background .15s}
+.mob-qa-i:hover{background:var(--g100)}
+
+/* ── PRICING ── */
+.price-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.price-card{background:#fff;border:2px solid var(--g200);border-radius:14px;padding:22px;text-align:center;position:relative;cursor:pointer;transition:all .2s}
+.price-card:hover,.price-card.sel{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,34,64,.08)}
+.price-card.feat{border-color:var(--amber)}
+.price-card.feat:hover,.price-card.feat.sel{border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,158,11,.14)}
+.price-pop{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--navy);font-size:10px;font-weight:700;padding:2px 10px;border-radius:20px;letter-spacing:.5px;white-space:nowrap}
+.price-plan{font-size:11.5px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.price-val{font-size:32px;font-weight:800;color:var(--g800);line-height:1}
+.price-val span{font-size:13px;color:var(--g400);font-weight:400}
+.price-users{font-size:12px;color:var(--g400);margin:6px 0 14px}
+.price-feat{display:flex;align-items:flex-start;gap:7px;padding:5px 0;font-size:12.5px;text-align:left}
+.pf-ok{color:var(--green)}.pf-no{color:var(--g300)}
+.price-btn{width:100%;padding:9px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:14px;transition:all .15s;font-family:inherit}
+.pb-main{background:var(--navy);color:#fff}.pb-main:hover{background:var(--navy2)}
+.pb-amber{background:var(--amber);color:var(--navy)}.pb-amber:hover{background:var(--amber2)}
+.pb-ghost{background:var(--g100);color:var(--g700)}.pb-ghost:hover{background:var(--g200)}
+.trust-bar{display:flex;gap:0;justify-content:space-around;padding:18px;background:#fff;border-radius:var(--r);border:1px solid var(--g200);box-shadow:var(--shadow)}
+.trust-i{text-align:center}
+.trust-ico{font-size:22px}
+.trust-lbl{font-weight:600;font-size:12.5px;margin-top:4px}
+.trust-sub{font-size:11px;color:var(--g400);margin-top:1px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--g300);border-radius:10px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">H</div>
+      <span class="login-logo-text">HORAS</span>
+    </div>
+    <div class="login-tagline">Le logiciel qui travaille comme vous.</div>
+    <label class="login-label">Adresse e-mail</label>
+    <input class="login-input" type="email" value="marc@bouchard-plomberie.fr">
+    <label class="login-label">Mot de passe</label>
+    <input class="login-input" type="password" value="••••••••">
+    <button class="login-btn" onclick="doLogin()">Se connecter →</button>
+    <div class="login-link"><a href="#">30 jours gratuits · sans carte bancaire</a></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon">H</div>
+    <span class="sb-logo-text">HORAS</span>
+    <span class="sb-logo-badge">BÊTA</span>
+  </div>
+  <div style="padding:8px 10px;flex:1">
+    <div class="sb-section">Principal</div>
+    <div class="sb-item active" data-page="dashboard"><span class="sb-icon">📊</span>Tableau de bord</div>
+    <div class="sb-section">Commercial</div>
+    <div class="sb-item" data-page="devis"><span class="sb-icon">📋</span>Devis<span class="sb-badge">3</span></div>
+    <div class="sb-item" data-page="factures"><span class="sb-icon">🧾</span>Factures</div>
+    <div class="sb-section">Terrain</div>
+    <div class="sb-item" data-page="chantiers"><span class="sb-icon">🏗️</span>Chantiers</div>
+    <div class="sb-item" data-page="planning"><span class="sb-icon">📅</span>Planning</div>
+    <div class="sb-item" data-page="plans"><span class="sb-icon">📐</span>Plans</div>
+    <div class="sb-section">Finance</div>
+    <div class="sb-item" data-page="finance"><span class="sb-icon">💹</span>Pilotage financier</div>
+    <div class="sb-section">Plus</div>
+    <div class="sb-item" data-page="mobile"><span class="sb-icon">📱</span>Aperçu mobile</div>
+    <div class="sb-item" data-page="tarifs"><span class="sb-icon">🏷️</span>Formules & prix</div>
+    <div class="sb-item" data-page="settings"><span class="sb-icon">⚙️</span>Paramètres</div>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="av" style="background:var(--amber);color:var(--navy)">MB</div>
+      <div><div style="font-size:12.5px;font-weight:600;color:#fff">Marc Bouchard</div><div style="font-size:11px;color:rgba(255,255,255,.4)">Dirigeant · Plan ÉQUIPE</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="tt">Tableau de bord</div>
+      <div class="topbar-sub" id="ts">Bonjour Marc 👋 — Mercredi 28 mai 2026</div>
+    </div>
+    <div class="topbar-right">
+      <div class="icon-btn notif">🔔</div>
+      <div class="icon-btn">🔍</div>
+      <button class="btn btn-amber" onclick="openModal('devis-modal')">+ Nouveau devis</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div id="page-dashboard" class="page active">
+      <div class="kpi-grid">
+        <div class="kpi kpi-b"><div class="kpi-label">CA ce mois</div><div class="kpi-val">42 800€</div><div class="kpi-trend kpi-up">↑ +12% vs mois dernier</div><div class="kpi-icon">📈</div></div>
+        <div class="kpi kpi-a"><div class="kpi-label">Devis en attente</div><div class="kpi-val">127 500€</div><div class="kpi-trend kpi-warn">⏳ 8 à signer</div><div class="kpi-icon">📋</div></div>
+        <div class="kpi kpi-g"><div class="kpi-label">Marge moyenne</div><div class="kpi-val">34.2%</div><div class="kpi-trend kpi-up">↑ +1.8 pts vs objectif</div><div class="kpi-icon">💹</div></div>
+        <div class="kpi kpi-o"><div class="kpi-label">Créances impayées</div><div class="kpi-val">18 400€</div><div class="kpi-trend kpi-down">⚠ 3 relances à envoyer</div><div class="kpi-icon">⚡</div></div>
+      </div>
+      <div class="alert al-warn">⚠️ <div><strong>Alerte marge — Résidence Les Pins :</strong> Marge tombée à <strong>18%</strong> (objectif 28%). Dépassement de 14h constaté. <span class="tlink" onclick="goTo('finance')">Voir le détail →</span></div></div>
+      <div class="g31">
+        <div>
+          <div class="card mb4">
+            <div class="card-hd"><span class="card-title">Chantiers en cours</span><button class="btn btn-ghost" style="font-size:11px;padding:4px 9px" onclick="goTo('chantiers')">Voir tout</button></div>
+            <div class="tw"><table>
+              <thead><tr><th>Chantier</th><th>Avancement</th><th>Marge</th><th>Statut</th></tr></thead>
+              <tbody>
+                <tr><td><div class="fw6">Résidence Les Pins</div><div class="fs12 c400">M. Fontaine</div></td><td><div class="flex fac gap2"><div class="prog" style="width:80px"><div class="prog-bar pa" style="width:68%"></div></div><span class="fs12">68%</span></div></td><td><span class="fw6 cr">18%</span></td><td><span class="badge b-orange">En cours</span></td></tr>
+                <tr><td><div class="fw6">Maison Dupont</div><div class="fs12 c400">Mme Dupont</div></td><td><div class="flex fac gap2"><div class="prog" style="width:80px"><div class="prog-bar pg" style="width:45%"></div></div><span class="fs12">45%</span></div></td><td><span class="fw6 cg">31%</span></td><td><span class="badge b-blue">Planifié</span></td></tr>
+                <tr><td><div class="fw6">Hôtel du Parc — R3</div><div class="fs12 c400">SARL Parigest</div></td><td><div class="flex fac gap2"><div class="prog" style="width:80px"><div class="prog-bar pb" style="width:89%"></div></div><span class="fs12">89%</span></div></td><td><span class="fw6 cg">38%</span></td><td><span class="badge b-green">Réception</span></td></tr>
+                <tr><td><div class="fw6">Atelier Renault</div><div class="fs12 c400">Renault Retail</div></td><td><div class="flex fac gap2"><div class="prog" style="width:80px"><div class="prog-bar pg" style="width:22%"></div></div><span class="fs12">22%</span></div></td><td><span class="fw6 cg">29%</span></td><td><span class="badge b-blue">En cours</span></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Derniers devis</span><span class="badge b-amber">3 à relancer</span></div>
+            <div class="tw"><table>
+              <thead><tr><th>Client</th><th>Montant HT</th><th>Date</th><th>Statut</th></tr></thead>
+              <tbody>
+                <tr><td><div class="tlink" onclick="goTo('devis')">Vinci Immobilier — Lot élec.</div></td><td class="fw6">68 400€</td><td class="c400">22/05</td><td><span class="badge b-amber">En attente</span></td></tr>
+                <tr><td><div class="tlink" onclick="goTo('devis')">M. Perrier — Salle de bain</div></td><td class="fw6">4 850€</td><td class="c400">19/05</td><td><span class="badge b-amber">Vu — non signé</span></td></tr>
+                <tr><td><div class="tlink" onclick="goTo('devis')">SCI Garonne — Ravalement</div></td><td class="fw6">22 100€</td><td class="c400">14/05</td><td><span class="badge b-green">Accepté ✓</span></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb4"><div class="card-hd"><span class="card-title">CA mensuel</span></div><div class="card-body"><canvas id="chartCA" height="175"></canvas></div></div>
+          <div class="card"><div class="card-hd"><span class="card-title">Équipe aujourd'hui</span></div>
+            <div class="card-body" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">
+              <div class="flex fac fjb"><div class="flex fac gap2"><div class="av" style="width:26px;height:26px;font-size:10px">KA</div><span class="fs12 fw6">Karim A.</span></div><div style="text-align:right"><div class="badge b-green" style="font-size:10px">Pointé 7h42</div><div class="fs11 c400 mt2" style="margin-top:2px">Résidence Les Pins</div></div></div>
+              <div class="flex fac fjb"><div class="flex fac gap2"><div class="av" style="width:26px;height:26px;font-size:10px;background:#6366F1">LM</div><span class="fs12 fw6">Lucas M.</span></div><div style="text-align:right"><div class="badge b-green" style="font-size:10px">Pointé 7h55</div><div class="fs11 c400" style="margin-top:2px">Maison Dupont</div></div></div>
+              <div class="flex fac fjb"><div class="flex fac gap2"><div class="av" style="width:26px;height:26px;font-size:10px;background:#10B981">SR</div><span class="fs12 fw6">Sofia R.</span></div><div style="text-align:right"><div class="badge b-amber" style="font-size:10px">En trajet</div><div class="fs11 c400" style="margin-top:2px">Hôtel du Parc</div></div></div>
+              <div class="flex fac fjb"><div class="flex fac gap2"><div class="av" style="width:26px;height:26px;font-size:10px;background:#F97316">TB</div><span class="fs12 fw6">Thomas B.</span></div><div style="text-align:right"><div class="badge b-red" style="font-size:10px">Absent (maladie)</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DEVIS ═══ -->
+    <div id="page-devis" class="page">
+      <div class="sh"><div><div class="sh-title">Devis</div><div class="sh-sub">22 devis ce mois · 127 500€ en attente de signature</div></div><div class="flex gap2"><button class="btn btn-ghost">📥 Importer</button><button class="btn btn-amber" onclick="openModal('devis-modal')">+ Nouveau devis</button></div></div>
+      <div class="tabs"><div class="tab active" onclick="switchTab(this)">Tous (22)</div><div class="tab" onclick="switchTab(this)">En attente (8)</div><div class="tab" onclick="switchTab(this)">Acceptés (14)</div><div class="tab" onclick="switchTab(this)">Archivés</div></div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>#</th><th>Client</th><th>Désignation</th><th>Montant HT</th><th>Créé</th><th>Validité</th><th>Marge</th><th>Statut</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="c400">DEV-047</td><td class="fw6">Vinci Immobilier</td><td>Lot électricité — Rés. Azur</td><td class="fw6">68 400€</td><td class="c400">22/05</td><td class="co">J-8</td><td class="cg fw6">32%</td><td><span class="badge b-amber">En attente</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="openModal('devis-modal')">✏️ Éditer</button></td></tr>
+          <tr><td class="c400">DEV-046</td><td class="fw6">M. Perrier</td><td>Rénovation salle de bain</td><td class="fw6">4 850€</td><td class="c400">19/05</td><td class="cr">J-3</td><td class="cg fw6">41%</td><td><span class="badge b-amber">Vu — non signé</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="openModal('devis-modal')">✏️ Éditer</button></td></tr>
+          <tr><td class="c400">DEV-045</td><td class="fw6">SCI Garonne</td><td>Ravalement façade + isolation</td><td class="fw6">22 100€</td><td class="c400">14/05</td><td>J+24</td><td class="cg fw6">35%</td><td><span class="badge b-green">Accepté ✓</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">🧾 Facturer</button></td></tr>
+          <tr><td class="c400">DEV-044</td><td class="fw6">Mme Lecomte</td><td>Cuisine + parquet chêne</td><td class="fw6">11 200€</td><td class="c400">10/05</td><td>J+20</td><td class="ca fw6">27%</td><td><span class="badge b-blue">Signé électronique</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">🧾 Facturer</button></td></tr>
+          <tr><td class="c400">DEV-043</td><td class="fw6">Mairie de Caussade</td><td>Mise aux normes accessibilité</td><td class="fw6">38 700€</td><td class="c400">08/05</td><td class="cr">Expiré</td><td class="cg fw6">30%</td><td><span class="badge b-gray">Expiré</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">♻️ Renouveler</button></td></tr>
+        </tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ═══ FACTURES ═══ -->
+    <div id="page-factures" class="page">
+      <div class="sh"><div><div class="sh-title">Facturation</div><div class="sh-sub">Acomptes · Situations · Soldes · Avoirs</div></div><button class="btn btn-amber">+ Nouvelle facture</button></div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi kpi-g"><div class="kpi-label">Encaissé ce mois</div><div class="kpi-val">34 200€</div><div class="kpi-trend kpi-up">↑ 8 factures réglées</div></div>
+        <div class="kpi kpi-o"><div class="kpi-label">Impayés &lt; 30j</div><div class="kpi-val">12 400€</div><div class="kpi-trend kpi-warn">3 factures</div></div>
+        <div class="kpi kpi-b" style="--navy:#EF4444"><div class="kpi-label">Impayés &gt; 30j</div><div class="kpi-val">6 000€</div><div class="kpi-trend kpi-down">⚠ Action requise</div></div>
+      </div>
+      <div class="card mb4"><div class="tw"><table>
+        <thead><tr><th>#</th><th>Client</th><th>Type</th><th>Montant TTC</th><th>Échéance</th><th>Statut</th><th>Action</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="c400">FA-038</td><td class="fw6">SCI Garonne</td><td><span class="badge b-blue">Acompte 30%</span></td><td class="fw6">7 951€</td><td>01/06</td><td><span class="badge b-green">Payée ✓</span></td><td class="c400">—</td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">📄 PDF</button></td></tr>
+          <tr><td class="c400">FA-037</td><td class="fw6">Vinci Immobilier</td><td><span class="badge b-amber">Situation 40%</span></td><td class="fw6">32 832€</td><td class="co">15/05</td><td><span class="badge b-orange">En retard J+12</span></td><td><button class="btn btn-amber" style="font-size:11px;padding:4px 8px">📨 Relancer</button></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">📄 PDF</button></td></tr>
+          <tr><td class="c400">FA-036</td><td class="fw6">M. Perrier</td><td><span class="badge b-gray">Solde</span></td><td class="fw6">2 328€</td><td class="cr">30/04</td><td><span class="badge b-red">Impayée J+27</span></td><td><button class="btn btn-red" style="font-size:11px;padding:4px 8px">⚖️ Mise en demeure</button></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">📄 PDF</button></td></tr>
+          <tr><td class="c400">FA-035</td><td class="fw6">Mme Lecomte</td><td><span class="badge b-gray">Solde</span></td><td class="fw6">6 720€</td><td>20/05</td><td><span class="badge b-green">Payée ✓</span></td><td class="c400">—</td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">📄 PDF</button></td></tr>
+        </tbody>
+      </table></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">⚡ Relances automatiques</span><button class="btn btn-ghost" style="font-size:11px;padding:4px 9px">Configurer</button></div>
+        <div class="card-body"><div class="g3">
+          <div style="border:1px solid var(--g200);border-radius:8px;padding:13px"><div class="fw6 fs12 mb2">Rappel J+5 après échéance</div><div class="fs12 c400 mb3">Ton amical · E-mail</div><span class="badge b-green">Actif</span></div>
+          <div style="border:1px solid var(--g200);border-radius:8px;padding:13px"><div class="fw6 fs12 mb2">Rappel J+15 après échéance</div><div class="fs12 c400 mb3">Ton ferme · E-mail + SMS</div><span class="badge b-green">Actif</span></div>
+          <div style="border:1px solid var(--g200);border-radius:8px;padding:13px"><div class="fw6 fs12 mb2">Mise en demeure J+30</div><div class="fs12 c400 mb3">Juridique · Validation manuelle</div><span class="badge b-amber">Manuel</span></div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ═══ CHANTIERS ═══ -->
+    <div id="page-chantiers" class="page">
+      <div class="sh"><div><div class="sh-title">Chantiers</div><div class="sh-sub">7 chantiers actifs · 3 en préparation</div></div><button class="btn btn-amber">+ Nouveau chantier</button></div>
+      <div class="ch-grid">
+        <div class="ch-card">
+          <div class="ch-hd"><div class="flex fjb fac"><div><div class="ch-name">Résidence Les Pins</div><div class="ch-client">M. Fontaine · Toulouse</div></div><span class="badge b-orange">En cours</span></div></div>
+          <div class="ch-body">
+            <div class="mb3"><div class="flex fjb fs12 mb2"><span class="c400">Avancement</span><strong>68%</strong></div><div class="prog"><div class="prog-bar pa" style="width:68%"></div></div></div>
+            <div class="marge-box mg-warn">⚠️ <div><div class="fs12 fw6" style="color:#92400E">Marge : 18% (objectif 28%)</div><div class="fs11" style="color:#B45309">+14h dépassées · Surveiller</div></div></div>
+            <div class="ch-meta"><div class="ch-meta-i">👷 3 ouvriers</div><div class="ch-meta-i">📅 Fin 15/06</div><div class="ch-meta-i">💶 82 400€</div></div>
+          </div>
+        </div>
+        <div class="ch-card">
+          <div class="ch-hd"><div class="flex fjb fac"><div><div class="ch-name">Maison Dupont</div><div class="ch-client">Mme Dupont · Albi</div></div><span class="badge b-blue">En cours</span></div></div>
+          <div class="ch-body">
+            <div class="mb3"><div class="flex fjb fs12 mb2"><span class="c400">Avancement</span><strong>45%</strong></div><div class="prog"><div class="prog-bar pg" style="width:45%"></div></div></div>
+            <div class="marge-box mg-ok">✅ <div><div class="fs12 fw6" style="color:#065F46">Marge : 31%</div><div class="fs11" style="color:#047857">Dans les objectifs</div></div></div>
+            <div class="ch-meta"><div class="ch-meta-i">👷 2 ouvriers</div><div class="ch-meta-i">📅 Fin 30/06</div><div class="ch-meta-i">💶 18 200€</div></div>
+          </div>
+        </div>
+        <div class="ch-card">
+          <div class="ch-hd"><div class="flex fjb fac"><div><div class="ch-name">Hôtel du Parc — R3</div><div class="ch-client">SARL Parigest · Montauban</div></div><span class="badge b-green">Réception</span></div></div>
+          <div class="ch-body">
+            <div class="mb3"><div class="flex fjb fs12 mb2"><span class="c400">Avancement</span><strong>89%</strong></div><div class="prog"><div class="prog-bar pb" style="width:89%"></div></div></div>
+            <div class="marge-box mg-ok">✅ <div><div class="fs12 fw6" style="color:#065F46">Marge : 38% · Excellent</div><div class="fs11" style="color:#047857">+10 pts vs objectif</div></div></div>
+            <div class="ch-meta"><div class="ch-meta-i">👷 5 ouvriers</div><div class="ch-meta-i">📅 Fin 01/06</div><div class="ch-meta-i">💶 124 000€</div></div>
+          </div>
+        </div>
+        <div class="ch-card">
+          <div class="ch-hd"><div class="flex fjb fac"><div><div class="ch-name">Atelier Renault Béziers</div><div class="ch-client">Renault Retail Group</div></div><span class="badge b-blue">En cours</span></div></div>
+          <div class="ch-body">
+            <div class="mb3"><div class="flex fjb fs12 mb2"><span class="c400">Avancement</span><strong>22%</strong></div><div class="prog"><div class="prog-bar pg" style="width:22%"></div></div></div>
+            <div class="marge-box mg-ok">✅ <div><div class="fs12 fw6" style="color:#065F46">Marge : 29%</div><div class="fs11" style="color:#047857">Conforme au devis</div></div></div>
+            <div class="ch-meta"><div class="ch-meta-i">👷 4 ouvriers</div><div class="ch-meta-i">📅 Fin 31/07</div><div class="ch-meta-i">💶 68 400€</div></div>
+          </div>
+        </div>
+        <div class="ch-card">
+          <div class="ch-hd"><div class="flex fjb fac"><div><div class="ch-name">SCI Garonne — Ravalement</div><div class="ch-client">SCI Garonne · Castres</div></div><span class="badge b-purple">Planifié</span></div></div>
+          <div class="ch-body">
+            <div class="mb3"><div class="flex fjb fs12 mb2"><span class="c400">Avancement</span><strong>0%</strong></div><div class="prog"><div class="prog-bar pb" style="width:0%"></div></div></div>
+            <div class="marge-box" style="background:var(--g50);border:1px solid var(--g200)">📋 <div><div class="fs12 fw6 c500">Démarrage le 09/06/2026</div><div class="fs11 c400">Marge prévisionnelle : 35%</div></div></div>
+            <div class="ch-meta"><div class="ch-meta-i">👷 3 ouvriers</div><div class="ch-meta-i">📅 Fin 15/07</div><div class="ch-meta-i">💶 22 100€</div></div>
+          </div>
+        </div>
+        <div class="ch-card" style="border-style:dashed;box-shadow:none;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:220px">
+          <div style="text-align:center;color:var(--g400)"><div style="font-size:32px;margin-bottom:8px">+</div><div class="fw6 fs12">Nouveau chantier</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PLANNING ═══ -->
+    <div id="page-planning" class="page">
+      <div class="sh"><div><div class="sh-title">Planning équipe</div><div class="sh-sub">Semaine du 27 au 31 mai 2026</div></div><div class="flex gap2"><button class="btn btn-ghost">← Préc.</button><button class="btn btn-ghost">Suiv. →</button><button class="btn btn-amber">+ Affecter</button></div></div>
+      <div class="card"><div class="card-body">
+        <div class="plan-grid" style="margin-bottom:6px">
+          <div class="plan-hd" style="text-align:left">Employé</div>
+          <div class="plan-hd">Lun 27</div><div class="plan-hd">Mar 28</div><div class="plan-hd">Mer 29</div><div class="plan-hd">Jeu 30</div><div class="plan-hd">Ven 31</div>
+        </div>
+        <div id="planning-rows"></div>
+      </div></div>
+      <div class="card mt4"><div class="card-hd"><span class="card-title">Légende</span></div>
+        <div class="card-body" style="display:flex;gap:14px;flex-wrap:wrap">
+          <div class="flex fac gap2"><div style="width:13px;height:13px;background:#3B82F6;border-radius:3px"></div><span class="fs12">Résidence Les Pins</span></div>
+          <div class="flex fac gap2"><div style="width:13px;height:13px;background:#10B981;border-radius:3px"></div><span class="fs12">Maison Dupont</span></div>
+          <div class="flex fac gap2"><div style="width:13px;height:13px;background:#F59E0B;border-radius:3px"></div><span class="fs12">Hôtel du Parc</span></div>
+          <div class="flex fac gap2"><div style="width:13px;height:13px;background:#8B5CF6;border-radius:3px"></div><span class="fs12">Atelier Renault</span></div>
+          <div class="flex fac gap2"><div style="width:13px;height:13px;background:#EC4899;border-radius:3px"></div><span class="fs12">SCI Garonne</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PLANS ═══ -->
+    <div id="page-plans" class="page">
+      <div class="sh"><div><div class="sh-title">Gestion des plans</div><div class="sh-sub">Plans partagés avec les équipes terrain — accessibles hors-ligne</div></div><button class="btn btn-amber">📤 Importer</button></div>
+      <div class="g31">
+        <div class="card"><div class="card-hd"><span class="card-title">Plans disponibles</span></div><div class="tw"><table>
+          <thead><tr><th>Nom</th><th>Chantier</th><th>Version</th><th>Partagé</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><div class="fw6">📐 Plan masse RdC</div><div class="fs11 c400">PDF · 2.4 Mo</div></td><td class="fs12">Résidence Les Pins</td><td><span class="badge b-blue">v3 actuelle</span></td><td><span class="badge b-green">3 ouvriers ✓</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">Ouvrir</button></td></tr>
+            <tr><td><div class="fw6">📐 Coupe AA' — SdB</div><div class="fs11 c400">DWG · 860 Ko</div></td><td class="fs12">Maison Dupont</td><td><span class="badge b-amber">v1</span></td><td><span class="badge b-amber">1 ouvrier</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">Ouvrir</button></td></tr>
+            <tr><td><div class="fw6">📐 Plan électrique R3</div><div class="fs11 c400">PDF · 1.1 Mo</div></td><td class="fs12">Hôtel du Parc</td><td><span class="badge b-blue">v2 actuelle</span></td><td><span class="badge b-green">5 ouvriers ✓</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">Ouvrir</button></td></tr>
+            <tr><td><div class="fw6">📐 Façade principale</div><div class="fs11 c400">DWG · 3.2 Mo</div></td><td class="fs12">SCI Garonne</td><td><span class="badge b-gray">Brouillon</span></td><td><span class="badge b-gray">Non partagé</span></td><td><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px">Partager</button></td></tr>
+          </tbody>
+        </table></div></div>
+        <div>
+          <div class="card mb4">
+            <div class="card-hd"><span class="card-title">Visionneuse — Plan masse RdC</span></div>
+            <div style="background:var(--g100);height:260px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;border-radius:0 0 var(--r) var(--r)">
+              <div style="font-size:44px">📐</div>
+              <div style="font-size:13px;color:var(--g500);text-align:center">Visionneuse PDF/DWG<br><span class="fs11">Annotation · Calques · Partage terrain</span></div>
+              <button class="btn btn-navy" style="margin-top:4px">🔍 Ouvrir le plan</button>
+            </div>
+          </div>
+          <div class="card"><div class="card-hd"><span class="card-title">Outils</span></div>
+            <div class="card-body" style="display:flex;gap:7px;flex-wrap:wrap">
+              <button class="btn btn-ghost" style="font-size:12px">✏️ Stylo</button>
+              <button class="btn btn-ghost" style="font-size:12px">➡️ Flèche</button>
+              <button class="btn btn-ghost" style="font-size:12px">⬜ Rectangle</button>
+              <button class="btn btn-ghost" style="font-size:12px">💬 Commentaire</button>
+              <button class="btn btn-red" style="font-size:12px">🚩 Réserve</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ FINANCE ═══ -->
+    <div id="page-finance" class="page">
+      <div class="sh-title mb6">Pilotage financier</div>
+      <div class="kpi-grid">
+        <div class="kpi kpi-b"><div class="kpi-label">CA annuel cumulé</div><div class="kpi-val">318 400€</div><div class="kpi-trend kpi-up">↑ +22% vs N-1</div></div>
+        <div class="kpi kpi-g"><div class="kpi-label">Marge brute cumulée</div><div class="kpi-val">108 900€</div><div class="kpi-trend kpi-up">↑ 34.2% de taux</div></div>
+        <div class="kpi kpi-a"><div class="kpi-label">Carnet de commandes</div><div class="kpi-val">241 000€</div><div class="kpi-trend kpi-up">↑ 3 mois de travail</div></div>
+        <div class="kpi kpi-o"><div class="kpi-label">Trésorerie prévis. 3 mois</div><div class="kpi-val">+28 400€</div><div class="kpi-trend kpi-up">↑ Positif</div></div>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="card-hd"><span class="card-title">Rentabilité par chantier</span></div><div class="card-body" id="marge-list"></div></div>
+        <div class="card"><div class="card-hd"><span class="card-title">CA & Marge sur 6 mois</span></div><div class="card-body"><canvas id="chartFin" height="210"></canvas></div></div>
+      </div>
+      <div class="card mt4"><div class="card-hd"><span class="card-title">Alertes financières</span></div>
+        <div class="card-body">
+          <div class="alert al-warn" style="margin-bottom:8px">⚠️ <div><strong>Résidence Les Pins</strong> — Marge 18% (seuil 25%). Dépassement de 14h main-d'œuvre.</div></div>
+          <div class="alert al-info" style="margin-bottom:0">ℹ️ <div><strong>3 factures</strong> impayées depuis +15 jours — 18 400€. Relances programmées automatiquement.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MOBILE ═══ -->
+    <div id="page-mobile" class="page">
+      <div class="sh-title mb6">Aperçu application mobile — Interface terrain</div>
+      <div class="mob-wrap">
+        <div class="mob-frame">
+          <div class="mob-screen">
+            <div class="mob-status"><span>9:41</span><span>📶 🔋</span></div>
+            <div class="mob-body">
+              <div class="mob-hd"><div class="flex fjb fac mb2"><div class="mob-hd-title">Bonjour Karim 👷</div><div style="background:rgba(16,185,129,.2);color:#6EE7B7;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600">● Sync</div></div><div class="mob-hd-sub">Mar 28 mai · 8 ouvriers actifs</div></div>
+              <div class="mob-sec">
+                <div class="mob-sec-title">Mon chantier du jour</div>
+                <div style="background:var(--navy);color:#fff;border-radius:11px;padding:11px 13px">
+                  <div style="font-weight:700;font-size:14px">Résidence Les Pins</div>
+                  <div style="font-size:11px;opacity:.65;margin-top:1px">24 rue des Lilas, Toulouse · Lot 3</div>
+                  <div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:10px;opacity:.65;margin-bottom:3px"><span>Avancement</span><span>68%</span></div><div style="height:3px;background:rgba(255,255,255,.2);border-radius:2px"><div style="width:68%;height:100%;background:var(--amber);border-radius:2px"></div></div></div>
+                </div>
+              </div>
+              <div id="mob-btn-wrap"><div class="mob-big-btn mob-btn-default" onclick="togglePointage()">⏱ Pointer mon arrivée</div></div>
+              <div class="mob-sec">
+                <div class="mob-sec-title">Mes tâches</div>
+                <div class="mob-card flex fac gap2" style="cursor:pointer" onclick="toggleTask(this)"><div class="mob-check" style="width:19px;height:19px;border:2px solid var(--g300);border-radius:5px;flex-shrink:0"></div><div><div style="font-weight:600;font-size:13px">Pose carrelage SdB</div><div class="fs11 c400">8h estimées · Étage 2</div></div></div>
+                <div class="mob-card flex fac gap2" style="cursor:pointer" onclick="toggleTask(this)"><div class="mob-check" style="width:19px;height:19px;border:2px solid var(--g300);border-radius:5px;flex-shrink:0"></div><div><div style="font-weight:600;font-size:13px">Joints périphériques</div><div class="fs11 c400">1h estimée · Étage 2</div></div></div>
+              </div>
+              <div class="mob-sec">
+                <div class="mob-sec-title">Actions rapides</div>
+                <div class="mob-qa">
+                  <div class="mob-qa-i"><div style="font-size:20px">📸</div><div style="font-size:10.5px;font-weight:600;color:var(--g700);margin-top:3px">Photos</div></div>
+                  <div class="mob-qa-i"><div style="font-size:20px">📐</div><div style="font-size:10.5px;font-weight:600;color:var(--g700);margin-top:3px">Plans</div></div>
+                  <div class="mob-qa-i"><div style="font-size:20px">📝</div><div style="font-size:10.5px;font-weight:600;color:var(--g700);margin-top:3px">Rapport</div></div>
+                  <div class="mob-qa-i" style="background:#FEF2F2;border-color:#FECACA"><div style="font-size:20px">🚨</div><div style="font-size:10.5px;font-weight:600;color:var(--red);margin-top:3px">Signaler</div></div>
+                </div>
+              </div>
+              <div style="height:60px"></div>
+            </div>
+            <div class="mob-nav">
+              <div class="mob-nav-i act"><div class="mob-ni">🏠</div>Accueil</div>
+              <div class="mob-nav-i"><div class="mob-ni">🏗️</div>Chantiers</div>
+              <div class="mob-nav-i"><div class="mob-ni">⏱</div>Pointage</div>
+              <div class="mob-nav-i"><div class="mob-ni">💬</div>Messages</div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div class="card mb4"><div class="card-hd"><span class="card-title">Architecture Offline-First</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:9px">
+              <div class="flex fac gap3" style="padding:10px;background:var(--g50);border-radius:8px"><span style="font-size:19px">💾</span><div><div class="fw6 fs12">Base de données locale (SQLite)</div><div class="fs11 c400">WatermelonDB — toutes données dispo sans réseau</div></div></div>
+              <div class="flex fac gap3" style="padding:10px;background:var(--g50);border-radius:8px"><span style="font-size:19px">🔄</span><div><div class="fw6 fs12">Synchronisation automatique</div><div class="fs11 c400">Queue d'actions — zéro perte si le réseau coupe</div></div></div>
+              <div class="flex fac gap3" style="padding:10px;background:var(--g50);border-radius:8px"><span style="font-size:19px">📐</span><div><div class="fw6 fs12">Plans mis en cache automatiquement</div><div class="fs11 c400">Consultation hors-ligne dès l'affectation au chantier</div></div></div>
+              <div class="flex fac gap3" style="padding:10px;background:var(--g50);border-radius:8px"><span style="font-size:19px">📸</span><div><div class="fw6 fs12">Photos en file d'attente</div><div class="fs11 c400">Prises offline, envoyées à la reconnexion</div></div></div>
+            </div>
+          </div>
+          <div class="card"><div class="card-hd"><span class="card-title">Performances garanties</span></div>
+            <div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="text-align:center;padding:13px;border:1px solid var(--g200);border-radius:8px"><div style="font-size:26px;font-weight:800;color:var(--navy)">2s</div><div class="fs11 c400">Chargement app à froid</div></div>
+              <div style="text-align:center;padding:13px;border:1px solid var(--g200);border-radius:8px"><div style="font-size:22px;font-weight:800;color:var(--navy)">2 taps</div><div class="fs11 c400">Pour pointer arrivée/départ</div></div>
+              <div style="text-align:center;padding:13px;border:1px solid var(--g200);border-radius:8px"><div style="font-size:26px;font-weight:800;color:var(--navy)">30s</div><div class="fs11 c400">Sync après reconnexion</div></div>
+              <div style="text-align:center;padding:13px;border:1px solid var(--g200);border-radius:8px"><div style="font-size:26px;font-weight:800;color:var(--navy)">100%</div><div class="fs11 c400">Hors-ligne fonctionnel</div></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TARIFS ═══ -->
+    <div id="page-tarifs" class="page">
+      <div class="sh"><div><div class="sh-title">Formules & Tarifs</div><div class="sh-sub">Sans engagement · Résiliation à tout moment · 30 jours gratuits sans CB</div></div></div>
+      <div class="alert al-ok mb4">✅ <div><strong>Charte éthique HORAS :</strong> Prix publics sans formulaire. Droit de rétractation 14j garanti. Export total de vos données à tout moment.</div></div>
+      <div class="price-grid">
+        <div class="price-card" onclick="selectPlan(this)">
+          <div class="price-plan">Solo</div>
+          <div class="price-val">39€<span>/mois HT</span></div>
+          <div class="price-users">1 utilisateur</div>
+          <hr style="border:none;border-top:1px solid var(--g100);margin-bottom:12px">
+          <div class="price-feat"><span class="pf-ok">✓</span> Devis & factures illimités</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> App mobile offline</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Biblio. 500 ouvrages</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Signature élec. (10/mois)</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Support chat 24h</div>
+          <div class="price-feat"><span class="pf-no">✗</span> <span class="c400">Gestion des plans</span></div>
+          <div class="price-feat"><span class="pf-no">✗</span> <span class="c400">Module IA</span></div>
+          <button class="price-btn pb-ghost">Démarrer l'essai gratuit</button>
+        </div>
+        <div class="price-card feat" onclick="selectPlan(this)">
+          <div class="price-pop">⭐ POPULAIRE</div>
+          <div class="price-plan">Équipe</div>
+          <div class="price-val">89€<span>/mois HT</span></div>
+          <div class="price-users">Jusqu'à 10 utilisateurs</div>
+          <hr style="border:none;border-top:1px solid var(--g100);margin-bottom:12px">
+          <div class="price-feat"><span class="pf-ok">✓</span> Tout Solo inclus</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Planning & pointage</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Gestion des plans</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> IA (dictée + suggestions)</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Relances automatiques</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Factures d'acompte</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Intégrations comptables</div>
+          <button class="price-btn pb-amber">Démarrer l'essai gratuit</button>
+        </div>
+        <div class="price-card" onclick="selectPlan(this)">
+          <div class="price-plan">Entreprise</div>
+          <div class="price-val">189€<span>/mois HT</span></div>
+          <div class="price-users">Utilisateurs illimités</div>
+          <hr style="border:none;border-top:1px solid var(--g100);margin-bottom:12px">
+          <div class="price-feat"><span class="pf-ok">✓</span> Tout Équipe inclus</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> API ouverte + webhooks</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> SSO + MFA</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Intégrations paie</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Open Banking</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Multi-agences</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Support prioritaire &lt;1h</div>
+          <button class="price-btn pb-main">Démarrer l'essai gratuit</button>
+        </div>
+        <div class="price-card" onclick="selectPlan(this)" style="background:var(--g50)">
+          <div class="price-plan">Grand Compte</div>
+          <div class="price-val" style="font-size:20px">Sur devis</div>
+          <div class="price-users">Dès 450€/mois HT</div>
+          <hr style="border:none;border-top:1px solid var(--g100);margin-bottom:12px">
+          <div class="price-feat"><span class="pf-ok">✓</span> Tout Entreprise inclus</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Instance dédiée</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> SLA 99.95% garanti</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> CSM dédié</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> White-label partiel</div>
+          <div class="price-feat"><span class="pf-ok">✓</span> Formation sur site</div>
+          <button class="price-btn pb-main" style="margin-top:28px">Nous contacter</button>
+        </div>
+      </div>
+      <div class="trust-bar">
+        <div class="trust-i"><div class="trust-ico">🔓</div><div class="trust-lbl">Sans engagement</div><div class="trust-sub">Résiliation fin de mois</div></div>
+        <div class="trust-i"><div class="trust-ico">🎁</div><div class="trust-lbl">30 jours gratuits</div><div class="trust-sub">Sans carte bancaire</div></div>
+        <div class="trust-i"><div class="trust-ico">↩️</div><div class="trust-lbl">Rétractation 14j</div><div class="trust-sub">Garantie contractuelle</div></div>
+        <div class="trust-i"><div class="trust-ico">📤</div><div class="trust-lbl">Export données</div><div class="trust-sub">Complet, à tout moment</div></div>
+        <div class="trust-i"><div class="trust-ico">🔒</div><div class="trust-lbl">-15% annuel</div><div class="trust-sub">Remboursement prorata</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ SETTINGS ═══ -->
+    <div id="page-settings" class="page">
+      <div class="sh-title mb6">Paramètres de l'entreprise</div>
+      <div class="g2">
+        <div class="card"><div class="card-hd"><span class="card-title">Informations entreprise</span></div>
+          <div class="card-body">
+            <div class="fg"><label class="fl">Raison sociale</label><input class="fc" value="BOUCHARD PLOMBERIE SARL"></div>
+            <div class="fr2"><div class="fg"><label class="fl">SIRET</label><input class="fc" value="82341267800018"></div><div class="fg"><label class="fl">N° TVA</label><input class="fc" value="FR12823412678"></div></div>
+            <div class="fg"><label class="fl">Adresse</label><input class="fc" value="14 Rue des Artisans, 31000 Toulouse"></div>
+            <div class="fr2"><div class="fg"><label class="fl">Téléphone</label><input class="fc" value="05 61 23 45 67"></div><div class="fg"><label class="fl">E-mail</label><input class="fc" value="contact@bouchard-plomberie.fr"></div></div>
+            <div class="fg"><label class="fl">Assurance décennale</label><input class="fc" value="MAAF Pro · N°12345678 · Exp. 31/12/2026"></div>
+            <button class="btn btn-navy">💾 Enregistrer</button>
+          </div>
+        </div>
+        <div>
+          <div class="card mb4"><div class="card-hd"><span class="card-title">Alertes de marge</span></div>
+            <div class="card-body">
+              <div class="fg"><label class="fl">Seuil d'alerte marge minimum</label>
+                <div class="flex fac gap2" style="margin-top:4px"><input type="range" min="5" max="50" value="25" id="mslider" oninput="document.getElementById('mval').textContent=this.value+'%'" style="flex:1;accent-color:var(--navy)"><span id="mval" style="font-weight:700;color:var(--navy);min-width:34px">25%</span></div>
+                <div class="fs11 c400" style="margin-top:4px">Notification au dirigeant si marge &lt; ce seuil</div>
+              </div>
+              <div class="fg"><label class="fl">Canal d'alerte</label>
+                <select class="fc"><option>E-mail + notification in-app</option><option>E-mail uniquement</option><option>SMS + E-mail + notification</option></select>
+              </div>
+              <button class="btn btn-navy">Enregistrer</button>
+            </div>
+          </div>
+          <div class="card"><div class="card-hd"><span class="card-title">Intégrations actives</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:9px">
+              <div class="flex fac fjb" style="padding:9px;background:var(--g50);border-radius:7px"><div class="flex fac gap2"><span style="font-size:17px">📊</span><div><div class="fw6 fs12">Pennylane</div><div class="fs11 c400">Comptabilité · Connecté</div></div></div><span class="badge b-green">Actif</span></div>
+              <div class="flex fac fjb" style="padding:9px;background:var(--g50);border-radius:7px"><div class="flex fac gap2"><span style="font-size:17px">✍️</span><div><div class="fw6 fs12">Yousign</div><div class="fs11 c400">Signature électronique</div></div></div><span class="badge b-green">Actif</span></div>
+              <div class="flex fac fjb" style="padding:9px;background:var(--g50);border-radius:7px"><div class="flex fac gap2"><span style="font-size:17px">💳</span><div><div class="fw6 fs12">Bridge (Open Banking)</div><div class="fs11 c400">Non configuré</div></div></div><button class="btn btn-ghost" style="font-size:11px;padding:4px 9px">+ Connecter</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODAL: NOUVEAU DEVIS -->
+<div class="overlay" id="devis-modal" onclick="if(event.target===this)closeModal('devis-modal')">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title">✨ Nouveau devis</div><button class="modal-close" onclick="closeModal('devis-modal')">✕</button></div>
+    <div class="fr2 mb3">
+      <div class="fg"><label class="fl">Client</label><select class="fc"><option>M. Fontaine</option><option>Mme Dupont</option><option>Vinci Immobilier</option><option>+ Nouveau client…</option></select></div>
+      <div class="fg"><label class="fl">Objet du devis</label><input class="fc" placeholder="Ex : Rénovation salle de bain…"></div>
+    </div>
+    <div class="ai-box"><div class="ai-tag">🤖 IA HORAS</div><div class="fs12 fw6" style="color:var(--g700);margin-bottom:6px">Dictez vos postes à la voix :</div><div class="flex gap2"><button class="btn" style="background:#6366F1;color:#fff;flex:1">🎙️ Démarrer la dictée vocale</button><button class="btn btn-ghost" style="font-size:12px">💡 Suggestions</button></div></div>
+    <div style="margin-top:14px">
+      <div class="flex fjb fac mb3"><div class="fw6 fs12">Lignes du devis</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 9px" onclick="addLine()">+ Ajouter une ligne</button></div>
+      <div class="dl-hd"><span>Désignation</span><span style="text-align:center">Qté</span><span style="text-align:right">Prix unit. HT</span><span style="text-align:right">Total HT</span><span></span></div>
+      <div class="dl-sect">1. Démolition <span class="c400">▼</span></div>
+      <div id="devis-lines">
+        <div class="dl"><input class="di" value="Dépose carrelage existant"><input class="di" type="number" value="18" style="text-align:center" oninput="recalc()"><input class="di" type="number" value="28" step="0.01" style="text-align:right" oninput="recalc()"><div class="dl-tv lt" style="text-align:right">504,00€</div><span style="cursor:pointer;color:var(--g300);text-align:center" onclick="this.closest('.dl').remove();recalc()">✕</span></div>
+        <div class="dl"><input class="di" value="Évacuation gravats"><input class="di" type="number" value="1" style="text-align:center" oninput="recalc()"><input class="di" type="number" value="180" step="0.01" style="text-align:right" oninput="recalc()"><div class="dl-tv lt" style="text-align:right">180,00€</div><span style="cursor:pointer;color:var(--g300);text-align:center" onclick="this.closest('.dl').remove();recalc()">✕</span></div>
+      </div>
+      <div class="dl-sect">2. Pose carrelage <span class="c400">▼</span></div>
+      <div id="devis-lines-2">
+        <div class="dl"><input class="di" value="Carrelage 60×60 rectifié"><input class="di" type="number" value="22" style="text-align:center" oninput="recalc()"><input class="di" type="number" value="42" step="0.01" style="text-align:right" oninput="recalc()"><div class="dl-tv lt" style="text-align:right">924,00€</div><span style="cursor:pointer;color:var(--g300);text-align:center" onclick="this.closest('.dl').remove();recalc()">✕</span></div>
+        <div class="dl"><input class="di" value="Main-d'œuvre pose carrelage"><input class="di" type="number" value="22" style="text-align:center" oninput="recalc()"><input class="di" type="number" value="35" step="0.01" style="text-align:right" oninput="recalc()"><div class="dl-tv lt" style="text-align:right">770,00€</div><span style="cursor:pointer;color:var(--g300);text-align:center" onclick="this.closest('.dl').remove();recalc()">✕</span></div>
+      </div>
+      <div class="dl-totals">
+        <div><div class="dl-tl">Total HT</div><div class="dl-tv" id="t-ht">2 378,00€</div></div>
+        <div><div class="dl-tl">TVA 10%</div><div class="dl-tv" id="t-tva">237,80€</div></div>
+        <div><div class="dl-tl">Marge estimée</div><div class="dl-tv cg" id="t-marge">34%</div></div>
+        <div><div class="dl-tl fw6">Total TTC</div><div class="dl-tv dl-main" id="t-ttc">2 615,80€</div></div>
+      </div>
+    </div>
+    <div class="flex fjb" style="margin-top:18px;padding-top:14px;border-top:1px solid var(--g100)">
+      <button class="btn btn-ghost" onclick="closeModal('devis-modal')">Annuler</button>
+      <div class="flex gap2">
+        <button class="btn btn-ghost">💾 Brouillon</button>
+        <button class="btn btn-amber">📄 Générer le PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PAGES ──
+const pageNames = {dashboard:'Tableau de bord',devis:'Devis',factures:'Facturation',chantiers:'Chantiers',planning:'Planning équipe',plans:'Gestion des plans',finance:'Pilotage financier',mobile:'Aperçu mobile',tarifs:'Formules & Tarifs',settings:'Paramètres'};
+let charts = {};
+
+function goTo(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'));
+  const p = document.getElementById('page-'+id);
+  if(p) p.classList.add('active');
+  document.querySelector(`[data-page="${id}"]`)?.classList.add('active');
+  document.getElementById('tt').textContent = pageNames[id]||id;
+  if(id==='finance') initFinance();
+  if(id==='planning') initPlanning();
+  if(id==='dashboard') initDashboard();
+}
+
+document.querySelectorAll('.sb-item').forEach(el=>{
+  el.addEventListener('click',()=>goTo(el.dataset.page));
+});
+
+// ── LOGIN ──
+function doLogin(){
+  const s=document.getElementById('login-screen');
+  s.classList.add('hidden');
+  document.getElementById('app').style.display='flex';
+  setTimeout(()=>{s.style.display='none';initDashboard();},420);
+}
+
+// ── MODALS ──
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+// ── TABS ──
+function switchTab(el){
+  el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── CHARTS ──
+function initDashboard(){
+  if(charts.ca) return;
+  const ctx=document.getElementById('chartCA');
+  if(!ctx) return;
+  charts.ca=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:['Déc','Jan','Fév','Mar','Avr','Mai'],
+      datasets:[
+        {label:'CA HT',data:[28400,31200,22800,38900,36100,42800],backgroundColor:'rgba(15,34,64,.78)',borderRadius:5},
+        {label:'Marge brute',data:[9100,10200,7600,13500,12400,14600],backgroundColor:'rgba(245,158,11,.85)',borderRadius:5}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},boxWidth:12}}},scales:{y:{ticks:{callback:v=>v/1000+'k€',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}
+  });
+}
+
+function initFinance(){
+  const ml=document.getElementById('marge-list');
+  if(!ml) return;
+  const data=[
+    {n:'Hôtel du Parc',m:38,ca:124000,c:'#10B981'},
+    {n:'Maison Dupont',m:31,ca:18200,c:'#10B981'},
+    {n:'Atelier Renault',m:29,ca:68400,c:'#10B981'},
+    {n:'SCI Garonne',m:27,ca:22100,c:'#F59E0B'},
+    {n:'Résidence Les Pins',m:18,ca:82400,c:'#EF4444'},
+  ];
+  ml.innerHTML=data.map(d=>`<div style="margin-bottom:12px"><div class="flex fjb fs12 mb2"><span class="fw6">${d.n}</span><div class="flex gap3"><span class="c400">${(d.ca/1000).toFixed(0)}k€</span><span style="font-weight:700;color:${d.c}">${d.m}%</span></div></div><div class="prog"><div class="prog-bar" style="width:${d.m*2}%;background:${d.c}"></div></div></div>`).join('');
+  if(charts.fin) return;
+  const ctx2=document.getElementById('chartFin');
+  if(!ctx2) return;
+  charts.fin=new Chart(ctx2,{
+    type:'line',
+    data:{
+      labels:['Déc','Jan','Fév','Mar','Avr','Mai'],
+      datasets:[
+        {label:'CA HT',data:[28400,31200,22800,38900,36100,42800],borderColor:'#0F2240',backgroundColor:'rgba(15,34,64,.08)',tension:.4,fill:true,yAxisID:'y'},
+        {label:'Marge %',data:[31,33,29,35,34,34.2],borderColor:'#F59E0B',tension:.4,borderDash:[4,3],yAxisID:'y2'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},boxWidth:12}}},scales:{y:{ticks:{callback:v=>v/1000+'k€',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},y2:{position:'right',ticks:{callback:v=>v+'%',font:{size:10}},grid:{display:false}},x:{ticks:{font:{size:11}},grid:{display:false}}}}
+  });
+}
+
+// ── PLANNING ──
+function initPlanning(){
+  const container=document.getElementById('planning-rows');
+  if(!container||container.innerHTML!=='') return;
+  const emps=[
+    {n:'Karim A.',days:[0,0,0,0,-1]},
+    {n:'Lucas M.',days:[1,1,1,2,2]},
+    {n:'Sofia R.',days:[2,2,3,3,3]},
+    {n:'Thomas B.',days:[0,-2,-2,-2,-2]},
+    {n:'Pierre D.',days:[4,4,4,0,0]},
+    {n:'Nour B.',days:[1,2,2,2,-1]},
+  ];
+  const labels=['Rés. Les Pins','Maison Dupont','Hôtel du Parc','Renault','SCI Garonne'];
+  const colors=['pc0','pc1','pc2','pc3','pc4'];
+  const initials=n=>n.split(' ').map(w=>w[0]).join('');
+  const avBg=['#F59E0B','#6366F1','#10B981','#F97316','#3B82F6','#8B5CF6'];
+  container.innerHTML=emps.map((e,i)=>`
+    <div class="plan-grid" style="margin-bottom:3px;align-items:center">
+      <div class="plan-name"><div class="av" style="width:24px;height:24px;font-size:9px;background:${avBg[i]};${i!==0?'color:#fff':''}">${initials(e.n)}</div><span style="font-size:12.5px">${e.n}</span></div>
+      ${e.days.map(d=>d===-1?`<div class="plan-cell pc-e"></div>`:d===-2?`<div class="plan-cell" style="background:#FEE2E2;border-radius:5px"><span style="font-size:10px;color:#EF4444;width:100%;text-align:center">Absent</span></div>`:`<div class="plan-cell ${colors[d]}"><span class="pc-txt">${labels[d]}</span></div>`).join('')}
+    </div>
+  `).join('');
+}
+
+// ── POINTAGE MOBILE ──
+let pointed=false;
+function togglePointage(){
+  pointed=!pointed;
+  const wrap=document.getElementById('mob-btn-wrap');
+  wrap.innerHTML=pointed
+    ?`<div class="mob-big-btn mob-btn-done" onclick="togglePointage()">✅ Pointé à 07h42 — Appuyer pour partir</div>`
+    :`<div class="mob-big-btn mob-btn-default" onclick="togglePointage()">⏱ Pointer mon arrivée</div>`;
+}
+
+function toggleTask(el){
+  const check=el.querySelector('.mob-check');
+  const title=el.querySelector('[style*="font-weight:600"]')||el.querySelector('div div');
+  if(check.style.background==='rgb(16, 185, 129)'){
+    check.style.background='';check.style.borderColor='';check.innerHTML='';
+    if(title){title.style.textDecoration='';title.style.opacity='';}
+  } else {
+    check.style.background='#10B981';check.style.borderColor='#10B981';check.style.display='flex';check.style.alignItems='center';check.style.justifyContent='center';check.innerHTML='<span style="color:#fff;font-size:11px;font-weight:700">✓</span>';
+    if(title){title.style.textDecoration='line-through';title.style.opacity='.45';}
+  }
+}
+
+// ── DEVIS RECALC ──
+function recalc(){
+  let total=0;
+  document.querySelectorAll('#devis-modal .dl').forEach(row=>{
+    const nums=row.querySelectorAll('input[type="number"]');
+    if(nums.length>=2){
+      const v=parseFloat(nums[0].value)||0;
+      const p=parseFloat(nums[1].value)||0;
+      const lt=v*p;total+=lt;
+      const d=row.querySelector('.lt');
+      if(d) d.textContent=lt.toLocaleString('fr-FR',{minimumFractionDigits:2})+'€';
+    }
+  });
+  const tva=total*.10;
+  document.getElementById('t-ht').textContent=total.toLocaleString('fr-FR',{minimumFractionDigits:2})+'€';
+  document.getElementById('t-tva').textContent=tva.toLocaleString('fr-FR',{minimumFractionDigits:2})+'€';
+  document.getElementById('t-ttc').textContent=(total+tva).toLocaleString('fr-FR',{minimumFractionDigits:2})+'€';
+}
+
+function addLine(){
+  const line=document.createElement('div');
+  line.className='dl';
+  line.innerHTML=`<input class="di" placeholder="Désignation…"><input class="di" type="number" value="1" style="text-align:center" oninput="recalc()"><input class="di" type="number" value="0" step="0.01" style="text-align:right" oninput="recalc()"><div class="dl-tv lt" style="text-align:right">0,00€</div><span style="cursor:pointer;color:var(--g300);text-align:center" onclick="this.closest('.dl').remove();recalc()">✕</span>`;
+  document.getElementById('devis-lines').appendChild(line);
+}
+
+// ── PRICING ──
+function selectPlan(el){
+  document.querySelectorAll('.price-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ── INIT ──
+initDashboard();
+</script>
+</body>
+</html>

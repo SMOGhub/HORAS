@@ -8,6 +8,7 @@
     }
   },
   "enabledPlugins": {
-    "impeccable@impeccable": true
+    "impeccable@impeccable": true,
+    "ui-ux-pro-max@ui-ux-pro-max": true
   }
 }

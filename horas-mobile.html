@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HORAS Mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#0F2240;--navy2:#1A3A6B;
+  --amber:#F59E0B;--amber2:#FCD34D;
+  --green:#10B981;--red:#EF4444;--orange:#F97316;--purple:#8B5CF6;
+  --g50:#F8FAFC;--g100:#F1F5F9;--g200:#E2E8F0;--g300:#CBD5E1;
+  --g400:#94A3B8;--g500:#64748B;--g700:#334155;--g800:#1E293B;
+  --nav-h:64px;--status-h:44px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden;background:#000}
+body{font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.45;color:var(--g800)}
+
+/* ── PHONE SHELL (desktop only) ── */
+.phone-shell{display:flex;justify-content:center;align-items:center;min-height:100vh;background:linear-gradient(135deg,#0a0a0f 0%,#0F2240 100%);padding:24px}
+.phone-frame{width:390px;height:844px;background:#1C1C1E;border-radius:54px;padding:10px;box-shadow:0 40px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);position:relative;flex-shrink:0}
+.phone-notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:126px;height:36px;background:#1C1C1E;border-radius:0 0 20px 20px;z-index:10}
+.phone-screen{width:100%;height:100%;border-radius:44px;overflow:hidden;background:#fff;position:relative;display:flex;flex-direction:column}
+/* On real phones remove shell */
+@media(max-width:430px){
+  .phone-shell{display:block;padding:0;background:#fff;min-height:unset}
+  .phone-frame{width:100%;height:100vh;background:transparent;border-radius:0;padding:0;box-shadow:none}
+  .phone-screen{border-radius:0}
+  .phone-notch{display:none}
+}
+
+/* ── STATUS BAR ── */
+.status-bar{height:var(--status-h);background:var(--navy);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0;position:relative;z-index:5}
+.sb-time{font-size:15px;font-weight:600;color:#fff}
+.sb-icons{display:flex;align-items:center;gap:5px;font-size:13px;color:rgba(255,255,255,.85)}
+
+/* ── SCREENS ── */
+.screen{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;opacity:0;pointer-events:none;transform:translateX(30px);transition:opacity .25s,transform .25s}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 8px)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{height:var(--nav-h);background:#fff;border-top:1px solid var(--g200);display:flex;justify-content:space-around;align-items:center;position:absolute;bottom:0;left:0;right:0;z-index:10;padding-bottom:var(--safe-bottom);flex-shrink:0}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 14px;border-radius:12px;transition:background .15s;user-select:none}
+.nav-item:active{background:var(--g100)}
+.nav-icon{font-size:22px;line-height:1}
+.nav-label{font-size:10px;font-weight:500;color:var(--g400)}
+.nav-item.active .nav-label{color:var(--navy);font-weight:600}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--navy);margin-top:1px}
+
+/* ── HEADER ── */
+.page-header{background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 100%);padding:16px 20px 20px;color:#fff;flex-shrink:0}
+.page-header-sm{background:var(--g50);padding:14px 18px;border-bottom:1px solid var(--g200);display:flex;align-items:center;gap:12px}
+.ph-title{font-size:22px;font-weight:800;margin-bottom:2px}
+.ph-sub{font-size:13px;opacity:.65}
+.ph-sm-title{font-size:17px;font-weight:700;color:var(--g800);flex:1}
+.back-btn{width:34px;height:34px;background:rgba(255,255,255,.12);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0}
+.back-btn-dark{background:var(--g100);border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px}
+
+/* ── SECTION ── */
+.section{padding:16px 18px}
+.section-title{font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:14px;border:1px solid var(--g200);overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card-dark{background:var(--navy);border-radius:14px;overflow:hidden;margin-bottom:10px;padding:14px 16px;color:#fff}
+.card-body{padding:14px 16px}
+.card-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background .15s}
+.card-row:last-child{border-bottom:none}
+.card-row:active{background:var(--g50)}
+.card-title-sm{font-weight:600;font-size:15px;color:var(--g800);margin-bottom:1px}
+.card-sub{font-size:12.5px;color:var(--g400)}
+.chevron{color:var(--g300);font-size:16px}
+
+/* ── BIG BUTTON ── */
+.big-btn{border-radius:16px;padding:17px;margin:0 18px 12px;text-align:center;font-weight:700;font-size:16px;cursor:pointer;transition:all .15s;user-select:none;border:none;font-family:inherit;width:calc(100% - 36px);display:block}
+.big-btn:active{transform:scale(.97)}
+.big-btn-navy{background:var(--navy);color:#fff;box-shadow:0 6px 18px rgba(15,34,64,.3)}
+.big-btn-green{background:var(--green);color:#fff;box-shadow:0 6px 18px rgba(16,185,129,.3)}
+.big-btn-amber{background:var(--amber);color:var(--navy);box-shadow:0 6px 18px rgba(245,158,11,.3)}
+.big-btn-red{background:var(--red);color:#fff;box-shadow:0 6px 18px rgba(239,68,68,.3)}
+
+/* ── GRID ACTIONS ── */
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px;margin-bottom:16px}
+.qa-item{background:var(--g50);border:1px solid var(--g200);border-radius:14px;padding:14px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.qa-item:active{background:var(--g200);transform:scale(.96)}
+.qa-icon{font-size:26px;margin-bottom:5px}
+.qa-label{font-size:12.5px;font-weight:600;color:var(--g700)}
+.qa-sub{font-size:11px;color:var(--g400);margin-top:2px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap}
+.b-green{background:#D1FAE5;color:#065F46}
+.b-amber{background:#FEF3C7;color:#92400E}
+.b-blue{background:#DBEAFE;color:#1E40AF}
+.b-gray{background:var(--g100);color:var(--g500)}
+.b-red{background:#FEE2E2;color:#991B1B}
+.b-orange{background:#FFEDD5;color:#9A3412}
+.b-purple{background:#EDE9FE;color:#5B21B6}
+.b-navy{background:rgba(15,34,64,.1);color:var(--navy)}
+
+/* ── PROGRESS ── */
+.prog{height:6px;background:var(--g100);border-radius:4px;overflow:hidden}
+.prog-bar{height:100%;border-radius:4px;transition:width .6s}
+
+/* ── AVATAR ── */
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 18px;margin-bottom:16px}
+.kpi-card{background:#fff;border-radius:14px;padding:14px;border:1px solid var(--g200);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.kpi-label{font-size:11px;color:var(--g400);font-weight:500;margin-bottom:4px}
+.kpi-val{font-size:20px;font-weight:800;color:var(--g800);line-height:1;margin-bottom:3px}
+.kpi-trend{font-size:11px}
+.t-up{color:var(--green)}.t-down{color:var(--red)}.t-warn{color:var(--orange)}
+
+/* ── LIST ── */
+.list-item{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background .15s}
+.list-item:last-child{border-bottom:none}
+.list-item:active{background:var(--g50)}
+.li-info{flex:1;min-width:0}
+.li-title{font-weight:600;font-size:14.5px;color:var(--g800);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-sub{font-size:12px;color:var(--g400)}
+.li-right{text-align:right;flex-shrink:0}
+
+/* ── TASK ── */
+.task-item{display:flex;align-items:flex-start;gap:12px;padding:13px 18px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background .15s}
+.task-item:active{background:var(--g50)}
+.task-check{width:22px;height:22px;border:2px solid var(--g300);border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px}
+.task-check.done{background:var(--green);border-color:var(--green)}
+.task-body{flex:1}
+.task-title{font-weight:600;font-size:14.5px;color:var(--g800);margin-bottom:2px;transition:all .2s}
+.task-title.done{text-decoration:line-through;color:var(--g400)}
+.task-meta{font-size:12px;color:var(--g400);display:flex;gap:8px}
+.task-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--g400)}
+
+/* ── NOTIF ── */
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:1px solid var(--g100)}
+.notif-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.notif-txt{font-size:13.5px;color:var(--g800);line-height:1.4;flex:1}
+.notif-time{font-size:11px;color:var(--g400);margin-top:2px}
+
+/* ── PLANNING ROW ── */
+.plan-row{padding:12px 18px;border-bottom:1px solid var(--g100)}
+.plan-person{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.plan-bar{height:32px;border-radius:8px;display:flex;align-items:center;padding:0 10px;font-size:12px;font-weight:500;color:#fff;margin-bottom:4px}
+
+/* ── CHANTIER CARD ── */
+.ch-card{border-radius:14px;border:1px solid var(--g200);overflow:hidden;margin-bottom:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer;transition:all .15s}
+.ch-card:active{transform:scale(.985);box-shadow:none}
+.ch-hd{padding:13px 16px;border-bottom:1px solid var(--g100);display:flex;justify-content:space-between;align-items:flex-start}
+.ch-body{padding:13px 16px}
+.ch-name{font-weight:700;font-size:15px;color:var(--g800);margin-bottom:1px}
+.ch-client{font-size:12.5px;color:var(--g400)}
+.marge-row{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:10px;margin:10px 0}
+.mg-ok{background:#F0FDF4;border:1px solid #BBF7D0}
+.mg-warn{background:#FFFBEB;border:1px solid #FDE68A}
+.mg-bad{background:#FEF2F2;border:1px solid #FECACA}
+
+/* ── DEVIS ── */
+.devis-line{padding:11px 18px;border-bottom:1px solid var(--g100);display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:background .15s}
+.devis-line:active{background:var(--g50)}
+.dl-left{flex:1;min-width:0}
+.dl-client{font-weight:600;font-size:14px;color:var(--g800);margin-bottom:1px}
+.dl-desc{font-size:12px;color:var(--g400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl-right{text-align:right;flex-shrink:0;margin-left:12px}
+.dl-amount{font-weight:700;font-size:14px;color:var(--g800)}
+.dl-date{font-size:11px;color:var(--g400);margin-top:1px}
+
+/* ── POINTAGE ── */
+.pointage-status{background:var(--navy);color:#fff;margin:0 18px 12px;border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:space-between}
+.ps-left{}
+.ps-label{font-size:12px;opacity:.65;margin-bottom:2px}
+.ps-time{font-size:22px;font-weight:800}
+.ps-dot{width:12px;height:12px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(16,185,129,.25)}
+.timer-ring{display:flex;align-items:center;justify-content:center;margin:10px 18px 14px;position:relative}
+.timer-text{position:absolute;text-align:center}
+.timer-val{font-size:32px;font-weight:800;color:var(--navy);line-height:1}
+.timer-label{font-size:12px;color:var(--g400);margin-top:2px}
+
+/* ── FORM ── */
+.form-section{padding:16px 18px}
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:12.5px;font-weight:500;color:var(--g700);margin-bottom:5px}
+.fc{width:100%;padding:12px 14px;border:1.5px solid var(--g200);border-radius:10px;font-size:15px;color:var(--g800);background:#fff;outline:none;font-family:inherit;-webkit-appearance:none}
+.fc:focus{border-color:var(--navy2);box-shadow:0 0 0 3px rgba(26,58,107,.1)}
+textarea.fc{resize:none;line-height:1.5}
+
+/* ── RAPPORT ── */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 18px;margin-bottom:14px}
+.photo-thumb{aspect-ratio:1;border-radius:10px;background:var(--g100);border:1px solid var(--g200);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;transition:all .15s}
+.photo-thumb:active{transform:scale(.93)}
+.photo-add{background:var(--g50);border-style:dashed}
+
+/* ── LOGIN ── */
+#screen-login{background:linear-gradient(160deg,var(--navy) 0%,#0a1830 100%)}
+.login-card{background:#fff;border-radius:24px;padding:28px 24px;margin:24px}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.login-logo-icon{width:40px;height:40px;background:var(--amber);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:var(--navy)}
+.login-logo-text{font-size:24px;font-weight:800;color:var(--navy)}
+.login-tagline{font-size:13px;color:var(--g400);margin-bottom:22px}
+.login-pill{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:12px;padding:6px 14px;border-radius:20px;text-align:center;margin:0 24px 20px}
+
+/* ── OFFLINE BANNER ── */
+.offline-banner{background:#FEF3C7;border-bottom:1px solid #FDE68A;padding:8px 18px;font-size:12px;color:#92400E;display:flex;align-items:center;gap:6px;display:none}
+.offline-banner.show{display:flex}
+
+/* ── SYNC INDICATOR ── */
+.sync-badge{background:rgba(16,185,129,.2);color:#6EE7B7;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.sync-badge.syncing{background:rgba(245,158,11,.2);color:var(--amber2)}
+.sync-badge.offline{background:rgba(239,68,68,.2);color:#FCA5A5}
+
+/* ── MISC ── */
+.divider{height:8px;background:var(--g50);border-top:1px solid var(--g100);border-bottom:1px solid var(--g100)}
+.fw6{font-weight:600}.fw7{font-weight:700}.fw8{font-weight:800}
+.fs11{font-size:11px}.fs12{font-size:12px}.fs13{font-size:13px}.fs16{font-size:16px}
+.c400{color:var(--g400)}.c500{color:var(--g500)}.cg{color:var(--green)}.cr{color:var(--red)}.ca{color:var(--amber)}.co{color:var(--orange)}
+.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}.mb4{margin-bottom:16px}
+.mt2{margin-top:8px}.mt3{margin-top:12px}
+.flex{display:flex}.fac{align-items:center}.fjb{justify-content:space-between}.gap2{gap:8px}.gap3{gap:12px}
+.px18{padding-left:18px;padding-right:18px}
+.w100{width:100%}
+::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+<div class="phone-frame">
+<div class="phone-notch"></div>
+<div class="phone-screen">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar" id="status-bar">
+    <span class="sb-time">9:41</span>
+    <span class="sb-icons">📶 &nbsp;🔋</span>
+  </div>
+
+  <!-- OFFLINE BANNER -->
+  <div class="offline-banner" id="offline-banner">
+    📵 Mode hors-ligne — les données seront synchronisées à la reconnexion
+  </div>
+
+  <!-- ════════════════ SCREEN: LOGIN ════════════════ -->
+  <div class="screen active" id="screen-login" style="background:linear-gradient(160deg,var(--navy) 0%,#0a1830 100%)">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 0">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="width:64px;height:64px;background:var(--amber);border-radius:18px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:32px;color:var(--navy);margin:0 auto 12px">H</div>
+        <div style="font-size:28px;font-weight:800;color:#fff">HORAS</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:4px">Le logiciel qui travaille comme vous.</div>
+      </div>
+      <div class="login-card">
+        <div class="fg"><label class="fl">E-mail</label><input class="fc" type="email" value="karim@bouchard-plomberie.fr"></div>
+        <div class="fg" style="margin-bottom:0"><label class="fl">Mot de passe</label><input class="fc" type="password" value="••••••••"></div>
+        <button class="big-btn big-btn-navy" style="margin:18px 0 0;border-radius:12px" onclick="doLogin()">Se connecter →</button>
+        <div style="text-align:center;font-size:12px;color:var(--g400);margin-top:12px"><span style="color:var(--amber);font-weight:500">30 jours gratuits</span> · sans carte bancaire</div>
+      </div>
+      <div class="login-pill">Connecté à <strong>BOUCHARD PLOMBERIE SARL</strong></div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: ACCUEIL (ouvrier) ════════════════ -->
+  <div class="screen" id="screen-home">
+    <div class="page-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div>
+          <div class="ph-title">Bonjour Karim 👷</div>
+          <div class="ph-sub">Mar. 28 mai · 8h42</div>
+        </div>
+        <div class="sync-badge" id="sync-badge">● Sync</div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <!-- Pointage rapide -->
+      <div style="padding:14px 18px 4px">
+        <div id="home-pointage-status" style="display:none" class="pointage-status mb3">
+          <div class="ps-left"><div class="ps-label">En cours depuis</div><div class="ps-time" id="home-timer-display">00:00:00</div></div>
+          <div class="ps-dot"></div>
+        </div>
+        <button class="big-btn" id="home-pointage-btn" onclick="togglePointageHome()">⏱&nbsp; Pointer mon arrivée</button>
+      </div>
+
+      <!-- Chantier du jour -->
+      <div class="section">
+        <div class="section-title">Mon chantier du jour</div>
+        <div class="card-dark" onclick="showScreen('chantier-detail')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div>
+              <div style="font-weight:800;font-size:17px;margin-bottom:2px">Résidence Les Pins</div>
+              <div style="font-size:12.5px;opacity:.6">24 rue des Lilas · Toulouse · Lot 3</div>
+            </div>
+            <span style="font-size:20px">›</span>
+          </div>
+          <div style="margin-bottom:4px;display:flex;justify-content:space-between;font-size:12px;opacity:.65"><span>Avancement</span><span>68%</span></div>
+          <div style="height:5px;background:rgba(255,255,255,.15);border-radius:4px"><div style="width:68%;height:100%;background:var(--amber);border-radius:4px"></div></div>
+        </div>
+      </div>
+
+      <!-- Tâches du jour -->
+      <div style="padding:0 18px 4px" class="flex fjb fac mb2">
+        <div class="section-title" style="margin:0">Mes tâches (3)</div>
+        <span class="badge b-navy fs11">2 restantes</span>
+      </div>
+      <div class="card" style="margin:0 18px 16px;overflow:visible">
+        <div class="task-item" onclick="toggleTask(this)">
+          <div class="task-check done"><span style="color:#fff;font-size:13px;font-weight:700">✓</span></div>
+          <div class="task-body">
+            <div class="task-title done">Dépose carrelage existant</div>
+            <div class="task-meta"><span>⏱ 3h</span><span>📍 Étage 2</span></div>
+          </div>
+        </div>
+        <div class="task-item" onclick="toggleTask(this)">
+          <div class="task-check"></div>
+          <div class="task-body">
+            <div class="task-title">Pose carrelage salle de bain</div>
+            <div class="task-meta"><span>⏱ 8h estimées</span><span>📍 Étage 2</span></div>
+          </div>
+        </div>
+        <div class="task-item" onclick="toggleTask(this)">
+          <div class="task-check"></div>
+          <div class="task-body">
+            <div class="task-title">Joints périphériques + nettoyage</div>
+            <div class="task-meta"><span>⏱ 1h estimée</span><span>📍 Étage 2</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions rapides -->
+      <div class="section-title px18">Actions rapides</div>
+      <div class="qa-grid">
+        <div class="qa-item" onclick="showScreen('rapport')">
+          <div class="qa-icon">📝</div>
+          <div class="qa-label">Rapport journalier</div>
+          <div class="qa-sub">Saisir avancement</div>
+        </div>
+        <div class="qa-item" onclick="showScreen('photos')">
+          <div class="qa-icon">📸</div>
+          <div class="qa-label">Photos chantier</div>
+          <div class="qa-sub">Prendre / envoyer</div>
+        </div>
+        <div class="qa-item" onclick="showScreen('plans-detail')">
+          <div class="qa-icon">📐</div>
+          <div class="qa-label">Voir les plans</div>
+          <div class="qa-sub">Disponibles hors-ligne</div>
+        </div>
+        <div class="qa-item" style="background:#FEF2F2;border-color:#FECACA" onclick="showScreen('signaler')">
+          <div class="qa-icon">🚨</div>
+          <div class="qa-label" style="color:var(--red)">Signaler un problème</div>
+          <div class="qa-sub" style="color:#FCA5A5">Incident · Manque</div>
+        </div>
+      </div>
+
+      <!-- Meteo & infos -->
+      <div class="section">
+        <div class="section-title">Infos chantier</div>
+        <div style="background:var(--g50);border-radius:12px;padding:12px 14px;border:1px solid var(--g200)">
+          <div class="flex fjb mb2"><span class="fs13 fw6">🌤 Météo : 22°C, ensoleillé</span><span class="fs12 c400">Toulouse</span></div>
+          <div class="flex gap2 mb2"><span class="fs12 c400">👷 Chef d'équipe :</span><span class="fs12 fw6">Sophie Martin</span></div>
+          <div class="flex gap2"><span class="fs12 c400">📞 Contact :</span><span class="fs12 fw6" style="color:var(--navy2)">06 12 34 56 78</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: CHANTIERS ════════════════ -->
+  <div class="screen" id="screen-chantiers">
+    <div style="background:#fff;padding:18px 18px 12px;border-bottom:1px solid var(--g200)">
+      <div style="font-size:22px;font-weight:800;color:var(--g800);margin-bottom:2px">Chantiers</div>
+      <div style="font-size:13px;color:var(--g400)">7 actifs · 3 en préparation</div>
+    </div>
+    <div class="screen-body" style="padding-top:14px">
+      <div class="px18">
+
+        <div class="ch-card" onclick="showScreen('chantier-detail')">
+          <div class="ch-hd"><div><div class="ch-name">Résidence Les Pins</div><div class="ch-client">M. Fontaine · Toulouse</div></div><span class="badge b-orange">En cours</span></div>
+          <div class="ch-body">
+            <div class="mb3"><div class="flex fjb fs12 mb2"><span class="c400">Avancement</span><strong>68%</strong></div><div class="prog"><div class="prog-bar" style="background:var(--amber);width:68%"></div></div></div>
+            <div class="marge-row mg-warn"><span style="font-size:16px">⚠️</span><div><div class="fs13 fw6" style="color:#92400E">Marge : 18% (obj. 28%)</div><div class="fs11" style="color:#B45309">+14h dépassées</div></div></div>
+            <div class="flex gap3 mt2"><span class="fs12 c400">👷 3</span><span class="fs12 c400">📅 Fin 15/06</span><span class="fs12 c400">💶 82 400€</span></div>
+          </div>
+        </div>
+
+        <div class="ch-card" onclick="showScreen('chantier-detail')">
+          <div class="ch-hd"><div><div class="ch-name">Maison Dupont</div><div class="ch-client">Mme Dupont · Albi</div></div><span class="badge b-blue">En cours</span></div>
+          <div class="ch-body">
+            <div class="mb3"><div class="flex fjb fs12 mb2"><span class="c400">Avancement</span><strong>45%</strong></div><div class="prog"><div class="prog-bar" style="background:var(--green);width:45%"></div></div></div>
+            <div class="marge-row mg-ok"><span style="font-size:16px">✅</span><div><div class="fs13 fw6" style="color:#065F46">Marge : 31% — OK</div><div class="fs11" style="color:#047857">Dans les objectifs</div></div></div>
+            <div class="flex gap3 mt2"><span class="fs12 c400">👷 2</span><span class="fs12 c400">📅 Fin 30/06</span><span class="fs12 c400">💶 18 200€</span></div>
+          </div>
+        </div>
+
+        <div class="ch-card" onclick="showScreen('chantier-detail')">
+          <div class="ch-hd"><div><div class="ch-name">Hôtel du Parc — R3</div><div class="ch-client">SARL Parigest · Montauban</div></div><span class="badge b-green">Réception</span></div>
+          <div class="ch-body">
+            <div class="mb3"><div class="flex fjb fs12 mb2"><span class="c400">Avancement</span><strong>89%</strong></div><div class="prog"><div class="prog-bar" style="background:var(--navy2);width:89%"></div></div></div>
+            <div class="marge-row mg-ok"><span style="font-size:16px">✅</span><div><div class="fs13 fw6" style="color:#065F46">Marge : 38% — Excellent</div><div class="fs11" style="color:#047857">+10 pts vs objectif</div></div></div>
+            <div class="flex gap3 mt2"><span class="fs12 c400">👷 5</span><span class="fs12 c400">📅 Fin 01/06</span><span class="fs12 c400">💶 124 000€</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: CHANTIER DETAIL ════════════════ -->
+  <div class="screen" id="screen-chantier-detail">
+    <div class="page-header">
+      <div class="flex fac gap2 mb3"><div class="back-btn" onclick="goBack()">←</div><div style="flex:1"><div style="opacity:.7;font-size:13px">Chantier</div></div></div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:3px">Résidence Les Pins</div>
+      <div style="font-size:13px;opacity:.65">M. Fontaine · 24 rue des Lilas, Toulouse</div>
+      <div class="flex gap2 mt2">
+        <span class="badge" style="background:rgba(249,115,22,.2);color:#FDBA74">En cours</span>
+        <span class="badge" style="background:rgba(255,255,255,.15);color:rgba(255,255,255,.8)">Lot 3 — Carrelage</span>
+      </div>
+    </div>
+    <div class="screen-body">
+      <!-- Progress -->
+      <div class="section">
+        <div class="flex fjb fs12 mb2"><span class="c400 fw6">Avancement global</span><strong>68%</strong></div>
+        <div class="prog" style="height:10px;border-radius:8px"><div class="prog-bar" style="background:var(--amber);width:68%;border-radius:8px"></div></div>
+        <div class="flex fjb mt2 fs12 c400"><span>Démarré le 03/04/2026</span><span>Fin prévue : 15/06/2026</span></div>
+      </div>
+      <div class="divider"></div>
+
+      <!-- Marge alert -->
+      <div style="margin:14px 18px;padding:12px 14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px">
+        <div class="flex fac gap2 mb2"><span style="font-size:18px">⚠️</span><div class="fw6 fs13" style="color:#92400E">Alerte marge</div></div>
+        <div class="fs12" style="color:#B45309">Marge actuelle <strong>18%</strong> — objectif 28%. Dépassement de <strong>14 heures</strong> main-d'œuvre constaté. Contacter la direction.</div>
+      </div>
+
+      <!-- Équipe -->
+      <div class="section-title px18">Équipe sur ce chantier</div>
+      <div class="card" style="margin:0 18px 14px">
+        <div class="list-item"><div class="av" style="background:var(--amber);color:var(--navy)">KA</div><div class="li-info"><div class="li-title">Karim A. (vous)</div><div class="li-sub">Chef d'équipe · Carreleur</div></div><span class="badge b-green">Pointé</span></div>
+        <div class="list-item"><div class="av" style="background:#6366F1">LM</div><div class="li-info"><div class="li-title">Lucas M.</div><div class="li-sub">Manœuvre</div></div><span class="badge b-green">Pointé</span></div>
+        <div class="list-item"><div class="av" style="background:#F97316">TB</div><div class="li-info"><div class="li-title">Thomas B.</div><div class="li-sub">Carreleur</div></div><span class="badge b-red">Absent</span></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="qa-grid">
+        <div class="qa-item" onclick="showScreen('rapport')"><div class="qa-icon">📝</div><div class="qa-label">Rapport du jour</div></div>
+        <div class="qa-item" onclick="showScreen('photos')"><div class="qa-icon">📸</div><div class="qa-label">Photos</div></div>
+        <div class="qa-item" onclick="showScreen('plans-detail')"><div class="qa-icon">📐</div><div class="qa-label">Plans</div></div>
+        <div class="qa-item" onclick="showScreen('signaler')"><div class="qa-icon">🚨</div><div class="qa-label" style="color:var(--red)">Signaler</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: POINTAGE ════════════════ -->
+  <div class="screen" id="screen-pointage">
+    <div style="background:#fff;padding:18px 18px 12px;border-bottom:1px solid var(--g200)">
+      <div style="font-size:22px;font-weight:800;color:var(--g800);margin-bottom:2px">Pointage</div>
+      <div style="font-size:13px;color:var(--g400)">Mar. 28 mai 2026</div>
+    </div>
+    <div class="screen-body">
+      <!-- Timer circle -->
+      <div style="padding:20px 18px 8px;display:flex;flex-direction:column;align-items:center">
+        <svg width="200" height="200" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="85" fill="none" stroke="#E2E8F0" stroke-width="12"/>
+          <circle cx="100" cy="100" r="85" fill="none" stroke="var(--navy)" stroke-width="12" stroke-dasharray="534" stroke-dashoffset="267" stroke-linecap="round" transform="rotate(-90 100 100)" id="timer-circle"/>
+          <text x="100" y="92" text-anchor="middle" font-size="28" font-weight="800" fill="#1E293B" font-family="Inter" id="timer-main">00:00:00</text>
+          <text x="100" y="116" text-anchor="middle" font-size="12" fill="#94A3B8" font-family="Inter" id="timer-sublabel">En attente de pointage</text>
+        </svg>
+      </div>
+
+      <!-- Chantier actif -->
+      <div style="margin:0 18px 14px;padding:13px 15px;background:var(--g50);border-radius:12px;border:1px solid var(--g200)">
+        <div class="fs12 c400 mb2">Chantier affecté</div>
+        <div class="fw6 fs13">🏗️ Résidence Les Pins — Lot 3</div>
+        <div class="fs12 c400 mt2">📍 24 rue des Lilas, Toulouse</div>
+      </div>
+
+      <button class="big-btn" id="pointage-main-btn" onclick="togglePointage()">⏱&nbsp; Pointer mon arrivée</button>
+      <button class="big-btn big-btn-amber" style="font-size:13px;padding:12px" onclick="showScreen('rapport')">📝 Saisir rapport journalier</button>
+
+      <!-- Historique -->
+      <div class="divider"></div>
+      <div class="section-title px18" style="padding-top:14px">Historique de la semaine</div>
+      <div class="card" style="margin:0 18px">
+        <div class="list-item"><div style="width:42px;text-align:center"><div class="fw6 fs13">Mar</div><div class="fs11 c400">28/05</div></div><div class="li-info" style="margin-left:12px"><div class="li-title">En cours…</div><div class="li-sub">Résidence Les Pins</div></div><span class="badge b-amber">En cours</span></div>
+        <div class="list-item"><div style="width:42px;text-align:center"><div class="fw6 fs13">Lun</div><div class="fs11 c400">27/05</div></div><div class="li-info" style="margin-left:12px"><div class="li-title">8h 15min</div><div class="li-sub">Résidence Les Pins</div></div><span class="badge b-green">✓</span></div>
+        <div class="list-item"><div style="width:42px;text-align:center"><div class="fw6 fs13">Ven</div><div class="fs11 c400">24/05</div></div><div class="li-info" style="margin-left:12px"><div class="li-title">7h 50min</div><div class="li-sub">Hôtel du Parc</div></div><span class="badge b-green">✓</span></div>
+        <div class="list-item"><div style="width:42px;text-align:center"><div class="fw6 fs13">Jeu</div><div class="fs11 c400">23/05</div></div><div class="li-info" style="margin-left:12px"><div class="li-title">8h 00min</div><div class="li-sub">Hôtel du Parc</div></div><span class="badge b-green">✓</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: PLANS ════════════════ -->
+  <div class="screen" id="screen-plans">
+    <div style="background:#fff;padding:18px 18px 12px;border-bottom:1px solid var(--g200)">
+      <div class="flex fjb fac">
+        <div><div style="font-size:22px;font-weight:800;color:var(--g800);margin-bottom:2px">Plans</div><div style="font-size:13px;color:var(--g400)">4 plans disponibles · Hors-ligne ✓</div></div>
+        <div class="sync-badge">⬇ Sync</div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div class="card" style="margin:14px 18px">
+        <div class="card-row" onclick="showScreen('plans-detail')">
+          <div style="width:40px;height:40px;background:#EFF6FF;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📐</div>
+          <div class="li-info" style="margin-left:12px"><div class="li-title">Plan masse RdC</div><div class="li-sub">Résidence Les Pins · PDF · v3</div></div>
+          <div style="text-align:right;flex-shrink:0"><span class="badge b-green" style="font-size:10px;margin-bottom:3px">Sync ✓</span><div class="fs11 c400">2.4 Mo</div></div>
+        </div>
+        <div class="card-row" onclick="showScreen('plans-detail')">
+          <div style="width:40px;height:40px;background:#F0FDF4;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📐</div>
+          <div class="li-info" style="margin-left:12px"><div class="li-title">Coupe AA' — Salle de bain</div><div class="li-sub">Résidence Les Pins · DWG · v1</div></div>
+          <div style="text-align:right;flex-shrink:0"><span class="badge b-green" style="font-size:10px;margin-bottom:3px">Sync ✓</span><div class="fs11 c400">860 Ko</div></div>
+        </div>
+        <div class="card-row" onclick="showScreen('plans-detail')">
+          <div style="width:40px;height:40px;background:#FFFBEB;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📐</div>
+          <div class="li-info" style="margin-left:12px"><div class="li-title">Plan électrique R3</div><div class="li-sub">Hôtel du Parc · PDF · v2</div></div>
+          <div style="text-align:right;flex-shrink:0"><span class="badge b-amber" style="font-size:10px;margin-bottom:3px">Màj dispo</span><div class="fs11 c400">1.1 Mo</div></div>
+        </div>
+        <div class="card-row">
+          <div style="width:40px;height:40px;background:var(--g100);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📐</div>
+          <div class="li-info" style="margin-left:12px"><div class="li-title">Façade principale</div><div class="li-sub">SCI Garonne · DWG · v1</div></div>
+          <div style="text-align:right;flex-shrink:0"><span class="badge b-gray" style="font-size:10px;margin-bottom:3px">Non sync</span><div class="fs11 c400">3.2 Mo</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: PLAN DETAIL ════════════════ -->
+  <div class="screen" id="screen-plans-detail">
+    <div class="page-header">
+      <div class="flex fac gap2 mb3"><div class="back-btn" onclick="goBack()">←</div></div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:2px">Plan masse RdC</div>
+      <div style="font-size:12px;opacity:.65">Résidence Les Pins · PDF · Version 3 · Actuelle</div>
+    </div>
+    <div class="screen-body">
+      <!-- Plan viewer placeholder -->
+      <div style="background:var(--g100);margin:14px 18px;border-radius:14px;height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:1px solid var(--g200)">
+        <div style="font-size:52px">📐</div>
+        <div class="fw6 fs13 c500">Visionneuse de plan</div>
+        <div class="fs12 c400 px18" style="text-align:center">Pincez pour zoomer · Faites glisser pour naviguer</div>
+      </div>
+      <!-- Annotation tools -->
+      <div style="padding:0 18px;margin-bottom:14px">
+        <div class="fs12 fw6 c500 mb2">Outils d'annotation</div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">
+          <button class="btn-tool active-tool">✏️ Stylo</button>
+          <button class="btn-tool">➡️ Flèche</button>
+          <button class="btn-tool">⬜ Zone</button>
+          <button class="btn-tool">💬 Note</button>
+          <button class="btn-tool" style="color:var(--red)">🚩 Réserve</button>
+        </div>
+      </div>
+      <!-- Annotations list -->
+      <div class="section-title px18">Annotations (2)</div>
+      <div class="card" style="margin:0 18px">
+        <div class="card-row"><div class="fs13 fw6 c400" style="width:28px">🚩</div><div class="li-info"><div class="li-title" style="color:var(--red)">Réserve — Joint manquant étage 2</div><div class="li-sub">Karim A. · Aujourd'hui 8h14</div></div></div>
+        <div class="card-row"><div class="fs13 fw6 c400" style="width:28px">💬</div><div class="li-info"><div class="li-title">Vérifier cote fenêtre SdB nord</div><div class="li-sub">Sophie M. · Hier 16h32</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: RAPPORT ════════════════ -->
+  <div class="screen" id="screen-rapport">
+    <div class="page-header-sm"><div class="back-btn-dark" onclick="goBack()">←</div><div class="ph-sm-title">Rapport journalier</div><span class="badge b-amber">Brouillon</span></div>
+    <div class="screen-body">
+      <div class="form-section">
+        <div class="fg"><label class="fl">Date</label><input class="fc" type="date" value="2026-05-28"></div>
+        <div class="fg"><label class="fl">Chantier</label>
+          <select class="fc"><option>Résidence Les Pins — Lot 3</option><option>Maison Dupont</option></select>
+        </div>
+        <div class="fg"><label class="fl">Avancement aujourd'hui</label>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+            <input type="range" min="0" max="100" value="68" id="avancement-slider" oninput="document.getElementById('avancement-val').textContent=this.value+'%'" style="flex:1;accent-color:var(--navy)">
+            <span id="avancement-val" style="font-weight:700;color:var(--navy);min-width:36px">68%</span>
+          </div>
+        </div>
+        <div class="fg"><label class="fl">Description des travaux réalisés</label>
+          <textarea class="fc" rows="4" placeholder="Décrivez les travaux réalisés aujourd'hui…">Dépose carrelage existant salle de bain étage 2 (18m²). Nettoyage du support. Début de préparation du support pour pose de carrelage demain.</textarea>
+        </div>
+        <div class="fg"><label class="fl">Heures travaillées</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label class="fl" style="font-size:11px">Arrivée</label><input class="fc" type="time" value="07:42"></div>
+            <div><label class="fl" style="font-size:11px">Départ prévu</label><input class="fc" type="time" value="16:30"></div>
+          </div>
+        </div>
+        <div class="fg"><label class="fl">Incidents / Remarques</label>
+          <textarea class="fc" rows="2" placeholder="Aucun incident…"></textarea>
+        </div>
+        <div class="fg"><label class="fl">Météo</label>
+          <select class="fc"><option>🌤 Ensoleillé</option><option>⛅ Nuageux</option><option>🌧 Pluvieux</option></select>
+        </div>
+      </div>
+      <!-- Photos -->
+      <div class="section-title px18">Photos du rapport</div>
+      <div class="photo-grid">
+        <div class="photo-thumb" style="background:#FFF7ED;border-color:#FED7AA"><div style="text-align:center"><div style="font-size:20px">🏗️</div><div style="font-size:9px;color:var(--g400);margin-top:2px">08:12</div></div></div>
+        <div class="photo-thumb" style="background:#F0FDF4;border-color:#BBF7D0"><div style="text-align:center"><div style="font-size:20px">🪣</div><div style="font-size:9px;color:var(--g400);margin-top:2px">10:34</div></div></div>
+        <div class="photo-thumb photo-add"><div style="font-size:24px;color:var(--g400)">+</div></div>
+      </div>
+      <div style="height:14px"></div>
+      <button class="big-btn big-btn-navy" onclick="showToast('Rapport envoyé ✓')">📤 Envoyer le rapport</button>
+      <button class="big-btn big-btn-amber" style="font-size:13px;padding:11px;margin-top:0">💾 Sauvegarder brouillon</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: PHOTOS ════════════════ -->
+  <div class="screen" id="screen-photos">
+    <div class="page-header-sm"><div class="back-btn-dark" onclick="goBack()">←</div><div class="ph-sm-title">Photos chantier</div><button onclick="showToast('📸 Ouverture caméra…')" style="background:var(--navy);color:#fff;border:none;border-radius:10px;padding:7px 13px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">📸 Prendre</button></div>
+    <div class="screen-body">
+      <div class="section">
+        <div class="section-title">Albums</div>
+        <div class="card">
+          <div class="card-row" onclick="showToast('Album ouvert')"><div style="font-size:22px">🔨</div><div class="li-info" style="margin-left:12px"><div class="li-title">Avant travaux</div><div class="li-sub">6 photos · 22/04/2026</div></div><span class="chevron">›</span></div>
+          <div class="card-row" onclick="showToast('Album ouvert')"><div style="font-size:22px">🏗️</div><div class="li-info" style="margin-left:12px"><div class="li-title">En cours</div><div class="li-sub">12 photos · Aujourd'hui</div></div><span class="chevron">›</span></div>
+          <div class="card-row" onclick="showToast('Album ouvert')"><div style="font-size:22px">🚩</div><div class="li-info" style="margin-left:12px"><div class="li-title">Réserves</div><div class="li-sub">3 photos · 27/05/2026</div></div><span class="chevron">›</span></div>
+        </div>
+        <div class="section-title" style="margin-top:16px">Photos récentes</div>
+        <div class="photo-grid">
+          <div class="photo-thumb" style="background:#FFF7ED;border-color:#FED7AA"><div style="font-size:22px">🏗️</div></div>
+          <div class="photo-thumb" style="background:#F0FDF4;border-color:#BBF7D0"><div style="font-size:22px">🪣</div></div>
+          <div class="photo-thumb" style="background:#EFF6FF;border-color:#BFDBFE"><div style="font-size:22px">🔩</div></div>
+          <div class="photo-thumb" style="background:#FEF2F2;border-color:#FECACA"><div style="font-size:22px">🚩</div></div>
+          <div class="photo-thumb" style="background:#F5F3FF;border-color:#DDD6FE"><div style="font-size:22px">📏</div></div>
+          <div class="photo-thumb photo-add"><div style="font-size:24px;color:var(--g400)">+</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: SIGNALER ════════════════ -->
+  <div class="screen" id="screen-signaler">
+    <div class="page-header-sm" style="background:#FEF2F2;border-color:#FECACA"><div class="back-btn-dark" onclick="goBack()">←</div><div class="ph-sm-title" style="color:var(--red)">🚨 Signaler un problème</div></div>
+    <div class="screen-body">
+      <div class="form-section">
+        <div class="fg"><label class="fl">Type de problème</label>
+          <select class="fc">
+            <option>⚠️ Problème de sécurité</option>
+            <option>📦 Matériau manquant</option>
+            <option>🔧 Outil défectueux</option>
+            <option>📋 Plan incorrect</option>
+            <option>👷 Absence d'un ouvrier</option>
+            <option>🏗️ Défaut de réalisation</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Description</label>
+          <textarea class="fc" rows="4" placeholder="Décrivez le problème…"></textarea>
+        </div>
+        <div class="fg"><label class="fl">Chantier concerné</label>
+          <select class="fc"><option>Résidence Les Pins — Lot 3</option></select>
+        </div>
+        <div class="fg"><label class="fl">Urgence</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div id="urg-low" onclick="selectUrgence(this,'low')" style="padding:10px;border-radius:10px;border:2px solid var(--g200);text-align:center;cursor:pointer;transition:all .15s"><div style="font-size:18px">🟢</div><div style="font-size:11px;font-weight:600;margin-top:3px">Faible</div></div>
+            <div id="urg-med" onclick="selectUrgence(this,'med')" style="padding:10px;border-radius:10px;border:2px solid var(--amber);background:#FFFBEB;text-align:center;cursor:pointer;transition:all .15s"><div style="font-size:18px">🟡</div><div style="font-size:11px;font-weight:600;margin-top:3px;color:#92400E">Moyenne</div></div>
+            <div id="urg-high" onclick="selectUrgence(this,'high')" style="padding:10px;border-radius:10px;border:2px solid var(--g200);text-align:center;cursor:pointer;transition:all .15s"><div style="font-size:18px">🔴</div><div style="font-size:11px;font-weight:600;margin-top:3px">Urgente</div></div>
+          </div>
+        </div>
+      </div>
+      <button class="big-btn big-btn-red" onclick="showToast('🚨 Signalement envoyé à Sophie M.')">🚨 Envoyer le signalement</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ SCREEN: MESSAGES ════════════════ -->
+  <div class="screen" id="screen-messages">
+    <div style="background:#fff;padding:18px 18px 12px;border-bottom:1px solid var(--g200)">
+      <div style="font-size:22px;font-weight:800;color:var(--g800);margin-bottom:2px">Messages</div>
+      <div style="font-size:13px;color:var(--g400)">3 non lus</div>
+    </div>
+    <div class="screen-body">
+      <div class="section-title px18" style="padding-top:14px">Chantiers</div>
+      <div class="card" style="margin:0 18px">
+        <div class="list-item">
+          <div class="av" style="background:var(--green)">SM</div>
+          <div class="li-info" style="margin-left:12px">
+            <div class="flex fjb fac"><div class="li-title">Sophie Martin</div><div class="fs11 c400">il y a 14min</div></div>
+            <div class="li-sub">Rés. Les Pins · "Les joints doivent être posés avant…"</div>
+          </div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--navy);flex-shrink:0;margin-left:8px"></div>
+        </div>
+        <div class="list-item">
+          <div class="av" style="background:var(--amber);color:var(--navy)">MB</div>
+          <div class="li-info" style="margin-left:12px">
+            <div class="flex fjb fac"><div class="li-title">Marc Bouchard</div><div class="fs11 c400">hier 17h32</div></div>
+            <div class="li-sub">Équipe · "Planning semaine prochaine disponible"</div>
+          </div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--navy);flex-shrink:0;margin-left:8px"></div>
+        </div>
+        <div class="list-item">
+          <div class="av" style="background:#6366F1">LM</div>
+          <div class="li-info" style="margin-left:12px">
+            <div class="flex fjb fac"><div class="li-title">Lucas M.</div><div class="fs11 c400">hier 12h10</div></div>
+            <div class="li-sub">"Ok, je prends la benne demain matin"</div>
+          </div>
+        </div>
+      </div>
+      <div class="section-title px18" style="margin-top:16px">Notifications</div>
+      <div class="card" style="margin:0 18px">
+        <div class="notif-item"><div class="notif-dot" style="background:var(--amber)"></div><div><div class="notif-txt"><strong>Plan mis à jour</strong> — Plan masse RdC v3 disponible pour Rés. Les Pins</div><div class="notif-time">Aujourd'hui · 7h00</div></div></div>
+        <div class="notif-item"><div class="notif-dot" style="background:var(--green)"></div><div><div class="notif-txt"><strong>Tâche assignée</strong> — Sophie Martin vous a assigné "Joints périphériques"</div><div class="notif-time">Hier · 16h45</div></div></div>
+        <div class="notif-item"><div class="notif-dot" style="background:var(--navy)"></div><div><div class="notif-txt"><strong>Planning semaine 23</strong> — Votre planning a été mis à jour</div><div class="notif-time">Hier · 18h00</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="navTo('home')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Accueil</div>
+      <div class="nav-dot" id="navdot-home"></div>
+    </div>
+    <div class="nav-item" id="nav-chantiers" onclick="navTo('chantiers')">
+      <div class="nav-icon">🏗️</div>
+      <div class="nav-label">Chantiers</div>
+    </div>
+    <div class="nav-item" id="nav-pointage" onclick="navTo('pointage')">
+      <div class="nav-icon">⏱</div>
+      <div class="nav-label">Pointage</div>
+    </div>
+    <div class="nav-item" id="nav-plans" onclick="navTo('plans')">
+      <div class="nav-icon">📐</div>
+      <div class="nav-label">Plans</div>
+    </div>
+    <div class="nav-item" id="nav-messages" onclick="navTo('messages')">
+      <div class="nav-icon">💬</div>
+      <div class="nav-label">Messages</div>
+    </div>
+  </div>
+
+</div><!-- /phone-screen -->
+</div><!-- /phone-frame -->
+</div><!-- /phone-shell -->
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1E293B;color:#fff;padding:11px 20px;border-radius:25px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.3)"></div>
+
+<!-- TOOL BTN STYLE -->
+<style>
+.btn-tool{background:var(--g50);border:1.5px solid var(--g200);border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0}
+.btn-tool:active,.active-tool{background:var(--navy);color:#fff;border-color:var(--navy)}
+</style>
+
+<script>
+// ── SCREEN MANAGEMENT ──
+let currentScreen = 'login';
+let screenHistory = [];
+let pointed = false;
+let timerInterval = null;
+let seconds = 0;
+
+function showScreen(id) {
+  const prev = document.querySelector('.screen.active');
+  if(prev) { screenHistory.push(prev.id.replace('screen-','')); prev.classList.remove('active'); }
+  const next = document.getElementById('screen-'+id);
+  if(next) { next.style.transform='translateX(30px)'; next.classList.add('active'); requestAnimationFrame(()=>next.style.transform='translateX(0)'); }
+  currentScreen = id;
+}
+
+function goBack() {
+  if(!screenHistory.length) return;
+  const target = screenHistory.pop();
+  const curr = document.querySelector('.screen.active');
+  if(curr) { curr.style.transform='translateX(30px)'; setTimeout(()=>curr.classList.remove('active'),250); }
+  const next = document.getElementById('screen-'+target);
+  if(next) { next.classList.add('active'); next.style.transform='translateX(0)'; }
+  currentScreen = target;
+}
+
+function navTo(id) {
+  screenHistory = [];
+  const curr = document.querySelector('.screen.active');
+  if(curr) curr.classList.remove('active');
+  document.getElementById('screen-'+id).classList.add('active');
+  currentScreen = id;
+  document.querySelectorAll('.nav-item').forEach(n=>{ n.classList.remove('active'); n.querySelector('.nav-dot')?.remove(); });
+  const ni = document.getElementById('nav-'+id);
+  if(ni) { ni.classList.add('active'); if(!ni.querySelector('.nav-dot')){ const d=document.createElement('div'); d.className='nav-dot'; ni.appendChild(d); } }
+}
+
+// ── LOGIN ──
+function doLogin() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-home').classList.add('active');
+  currentScreen = 'home';
+  // start clock
+  setInterval(()=>{
+    const now=new Date();
+    document.getElementById('status-bar').querySelector('.sb-time').textContent=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  },30000);
+}
+
+// ── POINTAGE ──
+function togglePointage() {
+  pointed = !pointed;
+  if(pointed) {
+    seconds = 0;
+    timerInterval = setInterval(()=>{ seconds++; updateTimers(); },1000);
+  } else {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  updatePointageUI();
+}
+
+function togglePointageHome() { togglePointage(); }
+
+function updateTimers() {
+  const h=Math.floor(seconds/3600).toString().padStart(2,'0');
+  const m=Math.floor((seconds%3600)/60).toString().padStart(2,'0');
+  const s=(seconds%60).toString().padStart(2,'0');
+  const str=`${h}:${m}:${s}`;
+  const tm=document.getElementById('timer-main');
+  const ht=document.getElementById('home-timer-display');
+  if(tm) tm.textContent=str;
+  if(ht) ht.textContent=str;
+  const circle=document.getElementById('timer-circle');
+  if(circle){ const pct=Math.min(seconds/28800,1); circle.style.strokeDashoffset=534-(534*pct); }
+}
+
+function updatePointageUI() {
+  // Pointage screen btn
+  const btn=document.getElementById('pointage-main-btn');
+  if(btn){ btn.textContent=pointed?'⏹  Pointer mon départ':'⏱  Pointer mon arrivée'; btn.className='big-btn '+(pointed?'big-btn-red':'big-btn-navy'); }
+  // Home btn
+  const hbtn=document.getElementById('home-pointage-btn');
+  if(hbtn){ hbtn.textContent=pointed?'⏹  Pointer mon départ':'⏱  Pointer mon arrivée'; hbtn.className='big-btn '+(pointed?'big-btn-red':'big-btn-navy'); }
+  // Home status
+  const hps=document.getElementById('home-pointage-status');
+  if(hps) hps.style.display=pointed?'flex':'none';
+  // Timer label
+  const tl=document.getElementById('timer-sublabel');
+  if(tl) tl.textContent=pointed?'Durée de travail':'En attente de pointage';
+  if(!pointed){ const tm=document.getElementById('timer-main'); if(tm) tm.textContent='00:00:00'; const tc=document.getElementById('timer-circle'); if(tc) tc.style.strokeDashoffset='534'; }
+}
+
+// ── TASKS ──
+function toggleTask(el) {
+  const check=el.querySelector('.task-check');
+  const title=el.querySelector('.task-title');
+  if(!check||!title) return;
+  const done=check.classList.contains('done');
+  if(done){ check.classList.remove('done'); check.innerHTML=''; title.classList.remove('done'); }
+  else { check.classList.add('done'); check.innerHTML='<span style="color:#fff;font-size:13px;font-weight:700">✓</span>'; title.classList.add('done'); }
+}
+
+// ── URGENCE ──
+function selectUrgence(el, level) {
+  ['low','med','high'].forEach(l=>{ const e=document.getElementById('urg-'+l); if(e){e.style.borderColor='var(--g200)';e.style.background='';} });
+  const colors={low:'var(--green)',med:'var(--amber)',high:'var(--red)'};
+  el.style.borderColor=colors[level];
+  el.style.background=level==='low'?'#F0FDF4':level==='med'?'#FFFBEB':'#FEF2F2';
+}
+
+// ── SYNC TOGGLE (demo) ──
+let offlineDemo=false;
+document.querySelector('.sync-badge')?.addEventListener('click',()=>{
+  offlineDemo=!offlineDemo;
+  document.querySelectorAll('.sync-badge').forEach(b=>{ b.className='sync-badge'+(offlineDemo?' offline':''); b.textContent=offlineDemo?'✕ Hors-ligne':'● Sync'; });
+  document.getElementById('offline-banner').classList.toggle('show',offlineDemo);
+});
+
+// ── TOAST ──
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},2800);
+}
+</script>
+</body>
+</html>

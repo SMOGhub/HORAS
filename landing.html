@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClimPro — Installation Climatisation Daikin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --black:#0a0a0a;
+  --dark:#111;
+  --mid:#1e1e1e;
+  --accent:#1a73e8;
+  --accent2:#0d47a1;
+  --white:#fff;
+  --off:#f7f7f7;
+  --muted:#888;
+  --text:#222;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--white);color:var(--text);overflow-x:hidden}
+
+/* ─── NAV ─── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 48px;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06)}
+.logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.03em;color:var(--black)}
+.logo span{color:var(--accent)}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{text-decoration:none;font-size:14px;font-weight:500;color:var(--muted);transition:color .2s}
+.nav-links a:hover{color:var(--black)}
+.nav-cta{background:var(--black);color:#fff;border:none;padding:10px 24px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+
+/* ─── HERO ─── */
+#hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:120px 48px 80px;gap:64px;max-width:1400px;margin:0 auto}
+.hero-copy{max-width:560px}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:#f0f4ff;color:var(--accent);border-radius:100px;padding:6px 16px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:28px}
+.hero-eyebrow::before{content:'';width:7px;height:7px;background:var(--accent);border-radius:50%;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-family:'Syne',sans-serif;font-size:clamp(38px,4.5vw,68px);font-weight:800;line-height:1.05;letter-spacing:-.03em;color:var(--black);margin-bottom:24px}
+h1 em{font-style:normal;color:var(--accent)}
+.hero-sub{font-size:17px;line-height:1.7;color:#555;margin-bottom:40px;max-width:480px}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+.btn-primary{background:var(--black);color:#fff;border:none;padding:16px 36px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.22)}
+.btn-secondary{background:transparent;color:var(--black);border:1.5px solid rgba(0,0,0,.15);padding:16px 36px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-secondary:hover{border-color:var(--black);background:rgba(0,0,0,.04)}
+
+/* ─── AC SCENE ─── */
+.hero-visual{position:relative;display:flex;align-items:center;justify-content:center;min-height:500px}
+#ac-scene{width:100%;max-width:580px;position:relative}
+#ac-svg{width:100%;height:auto;filter:drop-shadow(0 40px 80px rgba(0,0,0,.18));overflow:visible}
+
+/* Component labels */
+.label-group{position:absolute;opacity:0;pointer-events:none;transition:opacity .5s}
+.label-group.visible{opacity:1}
+.label-line{position:absolute;background:var(--accent);transform-origin:0 0}
+.label-tag{position:absolute;background:var(--black);color:#fff;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:6px 14px;border-radius:100px;white-space:nowrap}
+
+/* SVG component animations */
+.comp{transition:transform .9s cubic-bezier(.34,1.3,.64,1), opacity .6s ease}
+.comp.exploded{/* set via JS */}
+
+/* ─── STATS STRIP ─── */
+#stats{background:var(--black);padding:64px 48px}
+.stats-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:32px}
+.stat h3{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:#fff;line-height:1}
+.stat p{font-size:13px;color:rgba(255,255,255,.45);margin-top:6px;letter-spacing:.04em;text-transform:uppercase}
+
+/* ─── EXPLODE SECTION ─── */
+#explode-section{padding:120px 48px;background:var(--off)}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-tag{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(28px,3.5vw,52px);font-weight:800;letter-spacing:-.02em;color:var(--black);margin-bottom:48px;max-width:700px;line-height:1.1}
+.components-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.comp-card{background:#fff;border-radius:20px;padding:28px;border:1px solid rgba(0,0,0,.06);transition:transform .25s,box-shadow .25s}
+.comp-card:hover{transform:translateY(-4px);box-shadow:0 20px 48px rgba(0,0,0,.1)}
+.comp-icon{width:48px;height:48px;background:#f0f4ff;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.comp-icon svg{width:24px;height:24px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.comp-card h4{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--black);margin-bottom:8px}
+.comp-card p{font-size:13px;line-height:1.6;color:var(--muted)}
+
+/* ─── CTA ─── */
+#cta{padding:140px 48px;background:var(--black);text-align:center}
+#cta h2{font-family:'Syne',sans-serif;font-size:clamp(32px,4vw,60px);font-weight:800;color:#fff;letter-spacing:-.03em;margin-bottom:24px;line-height:1.05}
+#cta p{font-size:17px;color:rgba(255,255,255,.5);margin-bottom:48px;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.7}
+.cta-btn{display:inline-block;background:#fff;color:var(--black);padding:18px 48px;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;cursor:pointer;border:none;transition:transform .2s,box-shadow .2s}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(255,255,255,.15)}
+
+/* ─── FOOTER ─── */
+footer{background:var(--black);border-top:1px solid rgba(255,255,255,.07);padding:32px 48px;display:flex;justify-content:space-between;align-items:center}
+footer p{font-size:13px;color:rgba(255,255,255,.3)}
+.footer-logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff}
+.footer-logo span{color:var(--accent)}
+
+/* ─── SCROLL FADE ─── */
+.fade-in{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:900px){
+  #hero{grid-template-columns:1fr;padding:100px 24px 60px;gap:48px}
+  .hero-visual{min-height:320px}
+  nav{padding:16px 24px}
+  .nav-links{display:none}
+  .stats-inner{grid-template-columns:repeat(2,1fr)}
+  .components-grid{grid-template-columns:repeat(2,1fr)}
+  #stats,#explode-section,#cta{padding:80px 24px}
+  footer{padding:24px;flex-direction:column;gap:12px;text-align:center}
+}
+@media(max-width:560px){
+  .components-grid{grid-template-columns:1fr}
+  .stats-inner{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Clim<span>Pro</span></div>
+  <ul class="nav-links">
+    <li><a href="#explode-section">Technologie</a></li>
+    <li><a href="#stats">Références</a></li>
+    <li><a href="#cta">Contact</a></li>
+  </ul>
+  <button class="nav-cta">Devis gratuit</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-copy fade-in">
+    <div class="hero-eyebrow">Installateur certifié Daikin</div>
+    <h1>Le confort<br>à son <em>apogée</em>.</h1>
+    <p class="hero-sub">Installation, entretien et dépannage de systèmes de climatisation split Daikin. Technologie inverter de pointe, silence absolu, efficacité maximale.</p>
+    <div class="hero-btns">
+      <button class="btn-primary">Demander un devis</button>
+      <button class="btn-secondary" onclick="startExplode()">Voir la technologie</button>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div id="ac-scene">
+      <svg id="ac-svg" viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Main body gradient -->
+          <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1c1c1c"/>
+            <stop offset="40%" stop-color="#111"/>
+            <stop offset="100%" stop-color="#0a0a0a"/>
+          </linearGradient>
+          <!-- Front panel highlight -->
+          <linearGradient id="panelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#2a2a2a"/>
+            <stop offset="100%" stop-color="#141414"/>
+          </linearGradient>
+          <!-- Top edge sheen -->
+          <linearGradient id="topSheen" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#333"/>
+            <stop offset="50%" stop-color="#444"/>
+            <stop offset="100%" stop-color="#2a2a2a"/>
+          </linearGradient>
+          <!-- Louvre gradient -->
+          <linearGradient id="louvreGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#1a1a1a"/>
+            <stop offset="100%" stop-color="#0d0d0d"/>
+          </linearGradient>
+          <!-- Heat exchanger coil gradient -->
+          <linearGradient id="exchGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#2c3e50"/>
+            <stop offset="50%" stop-color="#34495e"/>
+            <stop offset="100%" stop-color="#2c3e50"/>
+          </linearGradient>
+          <!-- Fan gradient -->
+          <radialGradient id="fanGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#333"/>
+            <stop offset="100%" stop-color="#111"/>
+          </radialGradient>
+          <!-- PCB gradient -->
+          <linearGradient id="pcbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0d3b0d"/>
+            <stop offset="100%" stop-color="#0a2a0a"/>
+          </linearGradient>
+          <!-- Compressor gradient -->
+          <linearGradient id="compGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#3d3d3d"/>
+            <stop offset="100%" stop-color="#1a1a1a"/>
+          </linearGradient>
+          <!-- Reflection on top -->
+          <linearGradient id="reflectGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.07)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </linearGradient>
+          <!-- Shadow filter -->
+          <filter id="shadow" x="-5%" y="-5%" width="110%" height="130%">
+            <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="rgba(0,0,0,0.35)"/>
+          </filter>
+          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <clipPath id="bodyClip">
+            <rect x="30" y="30" width="460" height="200" rx="22"/>
+          </clipPath>
+        </defs>
+
+        <!-- ── SHADOW ── -->
+        <ellipse cx="260" cy="248" rx="200" ry="10" fill="rgba(0,0,0,0.12)"/>
+
+        <!-- ══════════════════════════════════════════
+             COMPONENT: ÉCHANGEUR (back, first layer)
+        ══════════════════════════════════════════ -->
+        <g id="comp-exchanger" class="comp" style="transform-origin:260px 130px">
+          <!-- Evaporator coil — aluminium fins -->
+          <rect x="38" y="38" width="444" height="88" rx="4" fill="url(#exchGrad)" opacity=".95"/>
+          <!-- Fin details -->
+          <g stroke="#4a6278" stroke-width=".5" opacity=".6">
+            <line x1="70"  y1="38" x2="70"  y2="126"/>
+            <line x1="100" y1="38" x2="100" y2="126"/>
+            <line x1="130" y1="38" x2="130" y2="126"/>
+            <line x1="160" y1="38" x2="160" y2="126"/>
+            <line x1="190" y1="38" x2="190" y2="126"/>
+            <line x1="220" y1="38" x2="220" y2="126"/>
+            <line x1="250" y1="38" x2="250" y2="126"/>
+            <line x1="280" y1="38" x2="280" y2="126"/>
+            <line x1="310" y1="38" x2="310" y2="126"/>
+            <line x1="340" y1="38" x2="340" y2="126"/>
+            <line x1="370" y1="38" x2="370" y2="126"/>
+            <line x1="400" y1="38" x2="400" y2="126"/>
+            <line x1="430" y1="38" x2="430" y2="126"/>
+            <line x1="460" y1="38" x2="460" y2="126"/>
+          </g>
+          <!-- Copper tubes through coil -->
+          <g fill="none">
+            <ellipse cx="80"  cy="72" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="140" cy="72" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="200" cy="72" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="260" cy="72" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="320" cy="72" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="380" cy="72" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="440" cy="72" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="80"  cy="96" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="140" cy="96" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="200" cy="96" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="260" cy="96" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="320" cy="96" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="380" cy="96" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+            <ellipse cx="440" cy="96" rx="5" ry="5" fill="#b87333" stroke="#8b5a2b" stroke-width=".8"/>
+          </g>
+          <!-- Label band -->
+          <rect x="38" y="112" width="444" height="14" rx="0" fill="rgba(0,0,0,0.3)"/>
+          <text x="260" y="122" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="600" fill="rgba(255,255,255,0.4)" letter-spacing="2">ÉVAPORATEUR</text>
+        </g>
+
+        <!-- ══════════════════════════════════════════
+             COMPONENT: TURBINE / VENTILATEUR
+        ══════════════════════════════════════════ -->
+        <g id="comp-fan" class="comp" style="transform-origin:260px 155px">
+          <!-- Cross-flow fan cylinder -->
+          <rect x="42" y="128" width="436" height="56" rx="28" fill="#0d0d0d"/>
+          <!-- Fan blades visible through grille -->
+          <g clip-path="url(#bodyClip)" id="fan-blades">
+            <!-- Blade ring 1 -->
+            <g fill="#222" stroke="#333" stroke-width=".5">
+              <ellipse cx="100" cy="156" rx="22" ry="7" transform="rotate(-20 100 156)"/>
+              <ellipse cx="155" cy="156" rx="22" ry="7" transform="rotate(-20 155 156)"/>
+              <ellipse cx="210" cy="156" rx="22" ry="7" transform="rotate(-20 210 156)"/>
+              <ellipse cx="265" cy="156" rx="22" ry="7" transform="rotate(-20 265 156)"/>
+              <ellipse cx="320" cy="156" rx="22" ry="7" transform="rotate(-20 320 156)"/>
+              <ellipse cx="375" cy="156" rx="22" ry="7" transform="rotate(-20 375 156)"/>
+              <ellipse cx="430" cy="156" rx="22" ry="7" transform="rotate(-20 430 156)"/>
+              <!-- Shaft dots -->
+              <circle cx="100" cy="156" r="4" fill="#444"/>
+              <circle cx="155" cy="156" r="4" fill="#444"/>
+              <circle cx="210" cy="156" r="4" fill="#444"/>
+              <circle cx="265" cy="156" r="4" fill="#444"/>
+              <circle cx="320" cy="156" r="4" fill="#444"/>
+              <circle cx="375" cy="156" r="4" fill="#444"/>
+              <circle cx="430" cy="156" r="4" fill="#444"/>
+            </g>
+          </g>
+          <!-- Fan housing sides -->
+          <rect x="42" y="128" width="10" height="56" rx="5" fill="#161616"/>
+          <rect x="468" y="128" width="10" height="56" rx="5" fill="#161616"/>
+          <text x="260" y="160" text-anchor="middle" font-family="sans-serif" font-size="7" font-weight="600" fill="rgba(255,255,255,0.2)" letter-spacing="2">TURBINE TANGENTIELLE</text>
+        </g>
+
+        <!-- ══════════════════════════════════════════
+             COMPONENT: CARTE ÉLECTRONIQUE (PCB)
+        ══════════════════════════════════════════ -->
+        <g id="comp-pcb" class="comp" style="transform-origin:420px 90px">
+          <rect x="400" y="42" width="74" height="52" rx="4" fill="url(#pcbGrad)" stroke="#1a4a1a" stroke-width=".8"/>
+          <!-- PCB traces -->
+          <g stroke="#2d7a2d" stroke-width=".6" fill="none">
+            <path d="M408 55 h20 v8 h16"/>
+            <path d="M408 65 h12 v-8 h10"/>
+            <path d="M408 75 h30 v-6"/>
+            <path d="M445 55 v20 h10"/>
+            <path d="M458 58 v18"/>
+          </g>
+          <!-- Capacitors -->
+          <rect x="412" y="50" width="5" height="9" rx="1" fill="#c0392b"/>
+          <rect x="420" y="50" width="5" height="9" rx="1" fill="#2980b9"/>
+          <!-- IC chip -->
+          <rect x="433" y="60" width="14" height="10" rx="1" fill="#111" stroke="#333" stroke-width=".5"/>
+          <g fill="#555">
+            <rect x="433" y="62" width="2" height="1.5"/>
+            <rect x="433" y="65" width="2" height="1.5"/>
+            <rect x="433" y="68" width="2" height="1.5"/>
+            <rect x="445" y="62" width="2" height="1.5"/>
+            <rect x="445" y="65" width="2" height="1.5"/>
+            <rect x="445" y="68" width="2" height="1.5"/>
+          </g>
+          <!-- LED indicator -->
+          <circle cx="463" cy="77" r="2.5" fill="#00ff88" opacity=".8"/>
+          <circle cx="463" cy="77" r="4" fill="rgba(0,255,136,0.15)"/>
+          <!-- Connectors -->
+          <rect x="400" y="60" width="6" height="18" rx="1" fill="#222" stroke="#333" stroke-width=".5"/>
+          <g stroke="#555" stroke-width=".6">
+            <line x1="401" y1="63" x2="405" y2="63"/>
+            <line x1="401" y1="67" x2="405" y2="67"/>
+            <line x1="401" y1="71" x2="405" y2="71"/>
+            <line x1="401" y1="75" x2="405" y2="75"/>
+          </g>
+        </g>
+
+        <!-- ══════════════════════════════════════════
+             COMPONENT: FILTRE À AIR
+        ══════════════════════════════════════════ -->
+        <g id="comp-filter" class="comp" style="transform-origin:260px 46px">
+          <rect x="38" y="38" width="444" height="16" rx="4" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" stroke-width=".5"/>
+          <!-- Filter mesh pattern -->
+          <g stroke="rgba(200,200,200,0.12)" stroke-width=".4">
+            <line x1="38" y1="43" x2="482" y2="43"/>
+            <line x1="38" y1="49" x2="482" y2="49"/>
+            <line x1="80"  y1="38" x2="80"  y2="54"/>
+            <line x1="120" y1="38" x2="120" y2="54"/>
+            <line x1="160" y1="38" x2="160" y2="54"/>
+            <line x1="200" y1="38" x2="200" y2="54"/>
+            <line x1="240" y1="38" x2="240" y2="54"/>
+            <line x1="280" y1="38" x2="280" y2="54"/>
+            <line x1="320" y1="38" x2="320" y2="54"/>
+            <line x1="360" y1="38" x2="360" y2="54"/>
+            <line x1="400" y1="38" x2="400" y2="54"/>
+            <line x1="440" y1="38" x2="440" y2="54"/>
+          </g>
+          <text x="260" y="48.5" text-anchor="middle" font-family="sans-serif" font-size="6" font-weight="600" fill="rgba(255,255,255,0.3)" letter-spacing="2">FILTRE À AIR PM2.5</text>
+        </g>
+
+        <!-- ══════════════════════════════════════════
+             MAIN BODY — Daikin Stylish silhouette
+        ══════════════════════════════════════════ -->
+        <g id="comp-body" class="comp" filter="url(#shadow)" style="transform-origin:260px 130px">
+          <!-- Main housing -->
+          <rect x="30" y="30" width="460" height="200" rx="22" fill="url(#bodyGrad)"/>
+
+          <!-- Top edge specular highlight -->
+          <rect x="30" y="30" width="460" height="4" rx="2" fill="url(#topSheen)" opacity=".7"/>
+
+          <!-- Left side face -->
+          <rect x="30" y="30" width="12" height="200" rx="6" fill="#252525"/>
+
+          <!-- Right side face -->
+          <rect x="478" y="30" width="12" height="200" rx="6" fill="#252525"/>
+
+          <!-- Front panel main surface -->
+          <rect x="42" y="38" width="436" height="154" rx="10" fill="url(#panelGrad)"/>
+
+          <!-- Subtle reflection band on panel -->
+          <rect x="42" y="38" width="436" height="50" rx="10" fill="url(#reflectGrad)"/>
+
+          <!-- Panel edge groove top -->
+          <rect x="42" y="38" width="436" height="2" fill="rgba(255,255,255,0.05)"/>
+
+          <!-- Intake grille area (top) -->
+          <rect x="52" y="44" width="416" height="24" rx="4" fill="rgba(0,0,0,0.25)"/>
+          <!-- Grille slits -->
+          <g stroke="rgba(255,255,255,0.06)" stroke-width="1">
+            <line x1="52" y1="50" x2="468" y2="50"/>
+            <line x1="52" y1="56" x2="468" y2="56"/>
+            <line x1="52" y1="62" x2="468" y2="62"/>
+          </g>
+
+          <!-- DAIKIN LOGO area — subtle debossed look -->
+          <text x="260" y="110" text-anchor="middle" font-family="'Syne',Arial,sans-serif" font-size="18" font-weight="800" fill="rgba(255,255,255,0.07)" letter-spacing="6">DAIKIN</text>
+          <text x="260" y="122" text-anchor="middle" font-family="sans-serif" font-size="7" font-weight="400" fill="rgba(255,255,255,0.04)" letter-spacing="4">STYLISH</text>
+
+          <!-- Status LED strip -->
+          <rect x="200" y="134" width="120" height="3" rx="1.5" fill="rgba(255,255,255,0.03)"/>
+          <!-- LED dot -->
+          <circle cx="315" cy="135.5" r="3" fill="#1a73e8" opacity=".7"/>
+          <circle cx="315" cy="135.5" r="5.5" fill="rgba(26,115,232,0.15)"/>
+
+          <!-- Outlet louvre housing -->
+          <rect x="42" y="185" width="436" height="40" rx="10" fill="#0d0d0d"/>
+
+          <!-- Louvre blades (outlet) -->
+          <rect x="48" y="190" width="424" height="8" rx="4" fill="url(#louvreGrad)" stroke="rgba(255,255,255,0.05)" stroke-width=".5"/>
+          <rect x="48" y="200" width="424" height="8" rx="4" fill="url(#louvreGrad)" stroke="rgba(255,255,255,0.05)" stroke-width=".5"/>
+          <rect x="48" y="210" width="424" height="8" rx="4" fill="url(#louvreGrad)" stroke="rgba(255,255,255,0.05)" stroke-width=".5"/>
+
+          <!-- Outlet shadow + depth -->
+          <rect x="42" y="183" width="436" height="6" fill="rgba(0,0,0,0.4)"/>
+
+          <!-- Bottom edge -->
+          <rect x="30" y="226" width="460" height="4" rx="2" fill="rgba(255,255,255,0.02)"/>
+
+          <!-- Mounting brackets -->
+          <rect x="60"  y="28" width="20" height="6" rx="2" fill="#1a1a1a" stroke="rgba(255,255,255,0.07)" stroke-width=".5"/>
+          <rect x="240" y="28" width="40" height="6" rx="2" fill="#1a1a1a" stroke="rgba(255,255,255,0.07)" stroke-width=".5"/>
+          <rect x="440" y="28" width="20" height="6" rx="2" fill="#1a1a1a" stroke="rgba(255,255,255,0.07)" stroke-width=".5"/>
+        </g>
+
+        <!-- Air flow particles (animated) -->
+        <g id="airflow" opacity="0">
+          <g class="air-particle" style="animation:airFloat1 2.4s ease-in-out infinite">
+            <circle cx="120" cy="245" r="2" fill="#1a73e8" opacity=".5"/>
+          </g>
+          <g class="air-particle" style="animation:airFloat2 2.8s ease-in-out infinite .4s">
+            <circle cx="200" cy="248" r="1.5" fill="#1a73e8" opacity=".4"/>
+          </g>
+          <g class="air-particle" style="animation:airFloat3 2.2s ease-in-out infinite .8s">
+            <circle cx="280" cy="244" r="2" fill="#1a73e8" opacity=".5"/>
+          </g>
+          <g class="air-particle" style="animation:airFloat1 3s ease-in-out infinite 1.2s">
+            <circle cx="350" cy="246" r="1.5" fill="#1a73e8" opacity=".4"/>
+          </g>
+          <g class="air-particle" style="animation:airFloat2 2.6s ease-in-out infinite 0.2s">
+            <circle cx="420" cy="247" r="2" fill="#1a73e8" opacity=".5"/>
+          </g>
+        </g>
+      </svg>
+
+      <!-- HTML Labels (positioned absolute over SVG) -->
+      <div id="label-filter" class="label-group" style="top:2%;left:2%">
+        <div class="label-tag">Filtre PM2.5</div>
+      </div>
+      <div id="label-exchanger" class="label-group" style="top:8%;right:2%">
+        <div class="label-tag">Échangeur thermique</div>
+      </div>
+      <div id="label-fan" class="label-group" style="top:55%;left:2%">
+        <div class="label-tag">Turbine tangentielle</div>
+      </div>
+      <div id="label-pcb" class="label-group" style="top:22%;right:2%">
+        <div class="label-tag">Carte électronique</div>
+      </div>
+      <div id="label-louvre" class="label-group" style="bottom:8%;left:50%;transform:translateX(-50%)">
+        <div class="label-tag">Volets de diffusion</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="stats-inner">
+    <div class="stat fade-in"><h3>850+</h3><p>Installations réalisées</p></div>
+    <div class="stat fade-in" style="transition-delay:.1s"><h3>A+++</h3><p>Classe énergétique</p></div>
+    <div class="stat fade-in" style="transition-delay:.2s"><h3>19dB</h3><p>Niveau sonore min.</p></div>
+    <div class="stat fade-in" style="transition-delay:.3s"><h3>5 ans</h3><p>Garantie pièces & main-d'œuvre</p></div>
+  </div>
+</section>
+
+<!-- EXPLODE SECTION -->
+<section id="explode-section">
+  <div class="section-inner">
+    <div class="section-tag fade-in">Anatomie du système</div>
+    <h2 class="section-title fade-in">Chaque composant<br>conçu pour durer.</h2>
+    <div class="components-grid">
+      <!-- Échangeur -->
+      <div class="comp-card fade-in">
+        <div class="comp-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 6h18M3 10h18M3 14h18M3 18h18"/><path d="M6 3v18M10 3v18M14 3v18M18 3v18"/></svg>
+        </div>
+        <h4>Échangeur thermique</h4>
+        <p>Ailettes en aluminium haute densité avec tubes cuivre recouverts de nano-hydrophile. Transfert thermique optimisé, résistant à la corrosion.</p>
+      </div>
+      <!-- Turbine -->
+      <div class="comp-card fade-in" style="transition-delay:.1s">
+        <div class="comp-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <h4>Turbine tangentielle</h4>
+        <p>Ventilateur à flux croisé ultra-silencieux. Vitesse variable DC-inverter, réduction des vibrations à la source. Niveau sonore : dès 19 dB(A).</p>
+      </div>
+      <!-- Compresseur -->
+      <div class="comp-card fade-in" style="transition-delay:.2s">
+        <div class="comp-icon">
+          <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>
+        </div>
+        <h4>Compresseur Swing</h4>
+        <p>Technologie Daikin Swing Compressor : friction minimale, consommation réduite de 30 % vs piston classique. Modulation continue de 20 à 100 %.</p>
+      </div>
+      <!-- Filtre -->
+      <div class="comp-card fade-in" style="transition-delay:.3s">
+        <div class="comp-icon">
+          <svg viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+        </div>
+        <h4>Filtration PM2.5</h4>
+        <p>Double filtration : préfiltre lavable + filtre PM2.5 haute efficacité. Capture les particules fines, pollens et allergènes. Compatible flash streamer.</p>
+      </div>
+      <!-- PCB -->
+      <div class="comp-card fade-in" style="transition-delay:.4s">
+        <div class="comp-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 6V4M10 6V4M14 6V4M18 6V4M6 18v2M10 18v2M14 18v2M18 18v2"/></svg>
+        </div>
+        <h4>Carte électronique</h4>
+        <p>Microcontrôleur intelligent avec algorithmes d'apprentissage. Gestion prédictive de la demande, connexion WiFi, compatible Daikin Online Controller.</p>
+      </div>
+      <!-- Volets -->
+      <div class="comp-card fade-in" style="transition-delay:.5s">
+        <div class="comp-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <h4>Volets de diffusion</h4>
+        <p>Deux axes de diffusion motorisés indépendamment. Mode 3D airflow pour distribution homogène sans courants d'air directs sur les occupants.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <h2 class="fade-in">Prêt à passer<br>au confort absolu ?</h2>
+  <p class="fade-in">Notre équipe de techniciens certifiés Daikin intervient dans toute la région liégeoise. Devis gratuit sous 24h.</p>
+  <button class="cta-btn fade-in">Obtenir mon devis gratuit</button>
+</section>
+
+<footer>
+  <div class="footer-logo">Clim<span>Pro</span></div>
+  <p>© 2025 ClimPro · Installateur agréé Daikin · Région Liégeoise</p>
+  <p>contact@climpro.be · +32 4 123 45 67</p>
+</footer>
+
+<style>
+@keyframes airFloat1{0%,100%{transform:translateY(0) translateX(0);opacity:.5}50%{transform:translateY(14px) translateX(4px);opacity:.1}}
+@keyframes airFloat2{0%,100%{transform:translateY(0) translateX(0);opacity:.4}50%{transform:translateY(18px) translateX(-5px);opacity:.08}}
+@keyframes airFloat3{0%,100%{transform:translateY(0) translateX(0);opacity:.5}50%{transform:translateY(12px) translateX(6px);opacity:.12}}
+@keyframes spinFan{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes floatUnit{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style>
+
+<script>
+// ── Scroll fade-in observer ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') });
+}, { threshold: 0.12 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── Gentle float on the AC unit ──
+const scene = document.getElementById('ac-scene');
+let floatAnim;
+function startFloat() {
+  scene.style.animation = 'floatUnit 4s ease-in-out infinite';
+  scene.style.animationFillMode = 'both';
+}
+// Add keyframe to existing style
+const floatStyle = document.createElement('style');
+floatStyle.textContent = `#ac-scene { animation: floatUnit 4s ease-in-out infinite; }`;
+document.head.appendChild(floatStyle);
+
+// ── Explode animation ──
+let exploded = false;
+
+const compDefs = {
+  'comp-filter':    { tx: 0,  ty: -90 },
+  'comp-exchanger': { tx: 0,  ty: -55 },
+  'comp-fan':       { tx: -90, ty: 30 },
+  'comp-pcb':       { tx: 100, ty: -60 },
+};
+const labels = ['label-filter','label-exchanger','label-fan','label-pcb','label-louvre'];
+
+function startExplode() {
+  if (exploded) {
+    reassemble();
+    return;
+  }
+  exploded = true;
+  scene.style.animation = 'none';
+
+  // Move components
+  Object.entries(compDefs).forEach(([id, {tx, ty}]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.transition = 'transform 1s cubic-bezier(.34,1.1,.64,1), opacity .6s ease';
+      el.style.transform = `translate(${tx}px, ${ty}px)`;
+      el.style.opacity = '1';
+    }
+  });
+
+  // Show labels after delay
+  setTimeout(() => {
+    labels.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('visible');
+    });
+  }, 700);
+
+  // Show airflow
+  setTimeout(() => {
+    document.getElementById('airflow').style.opacity = '1';
+    document.getElementById('airflow').style.transition = 'opacity .8s';
+  }, 900);
+
+  // Scroll to section
+  document.getElementById('explode-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function reassemble() {
+  exploded = false;
+  // Hide labels & airflow
+  labels.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('visible');
+  });
+  document.getElementById('airflow').style.opacity = '0';
+
+  // Return components
+  Object.keys(compDefs).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.transition = 'transform .8s cubic-bezier(.25,.46,.45,.94), opacity .5s ease';
+      el.style.transform = 'translate(0,0)';
+    }
+  });
+
+  // Restart float
+  setTimeout(() => {
+    scene.style.animation = '';
+    const s = document.createElement('style');
+    s.textContent = `#ac-scene { animation: floatUnit 4s ease-in-out infinite; }`;
+    document.head.appendChild(s);
+  }, 850);
+}
+
+// Auto-trigger explode when hero visual is in view (first time)
+let autoTriggered = false;
+const heroObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !autoTriggered) {
+      autoTriggered = true;
+      setTimeout(startExplode, 1800);
+    }
+  });
+}, { threshold: 0.5 });
+heroObserver.observe(document.getElementById('ac-scene'));
+
+// Fan spin on hover
+document.getElementById('ac-scene').addEventListener('mouseenter', () => {
+  const blades = document.getElementById('fan-blades');
+  if (blades) {
+    blades.style.animation = 'spinFan .4s linear infinite';
+    blades.style.transformOrigin = '260px 156px';
+  }
+});
+document.getElementById('ac-scene').addEventListener('mouseleave', () => {
+  const blades = document.getElementById('fan-blades');
+  if (blades) blades.style.animation = '';
+});
+</script>
+</body>
+</html>

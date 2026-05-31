@@ -3,63 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Daikin Stylish – Anatomie 3D</title>
+<title>Daikin Stylish – Anatomie</title>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden;background:#020204;
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;
   font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-canvas{display:block;position:fixed;inset:0;z-index:0}
-#ui{position:fixed;inset:0;z-index:1;pointer-events:none}
+canvas{display:block;position:fixed;inset:0}
+#ui{position:fixed;inset:0;pointer-events:none;z-index:1}
 
-#brand{position:absolute;top:38px;left:46px;font:500 9px/1 sans-serif;
-  letter-spacing:6px;text-transform:uppercase;color:rgba(255,255,255,.18)}
-#tagline{position:absolute;top:38px;right:46px;text-align:right;font:400 8px/1 sans-serif;
-  letter-spacing:4px;text-transform:uppercase;color:rgba(0,195,255,.22)}
+/* corner brackets */
+.corner{position:absolute;width:22px;height:22px;opacity:.28}
+.corner.tl{top:28px;left:32px;border-top:1px solid #fff;border-left:1px solid #fff}
+.corner.tr{top:28px;right:32px;border-top:1px solid #fff;border-right:1px solid #fff}
+.corner.bl{bottom:28px;left:32px;border-bottom:1px solid #fff;border-left:1px solid #fff}
+.corner.br{bottom:28px;right:32px;border-bottom:1px solid #fff;border-right:1px solid #fff}
 
-#phase-wrap{position:absolute;bottom:52px;left:50%;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:10px}
-#phase{font:400 8px/1 sans-serif;letter-spacing:6px;text-transform:uppercase;
-  color:rgba(0,200,255,.42);white-space:nowrap}
-#bar{width:220px;height:1px;background:rgba(0,140,220,.10)}
-#bar-fill{height:100%;background:linear-gradient(90deg,transparent,rgba(0,195,255,.50),transparent);width:0;transition:none}
+/* brand */
+#brand{position:absolute;top:36px;left:52px;
+  font:400 8px/1 sans-serif;letter-spacing:7px;text-transform:uppercase;color:rgba(255,255,255,.22)}
 
-#dots{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
-  display:flex;gap:9px}
-.dot{width:4px;height:4px;border-radius:50%;background:rgba(0,150,255,.18);
-  transition:background .5s}
-.dot.active{background:rgba(0,195,255,.70)}
+/* main headline – cinematic style */
+#headline{position:absolute;bottom:110px;left:52px;
+  transition:opacity 1.2s ease, transform 1.2s ease;opacity:0;transform:translateY(12px)}
+#hl-top{font:300 11px/1 sans-serif;letter-spacing:5px;text-transform:uppercase;
+  color:rgba(255,255,255,.35);margin-bottom:9px}
+#hl-main{font:300 38px/1.05 'Helvetica Neue',sans-serif;color:rgba(255,255,255,.92);
+  letter-spacing:-1px;max-width:340px}
+#hl-sub{font:300 11px/1.6 sans-serif;letter-spacing:.3px;color:rgba(255,255,255,.28);
+  margin-top:12px;max-width:280px;font-size:10px}
 
-#hint{position:absolute;bottom:38px;right:46px;font:400 7px/1 sans-serif;
-  letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.10)}
+/* phase indicator bottom-right */
+#phase-wrap{position:absolute;bottom:36px;right:52px;text-align:right}
+#phase{font:400 8px/1 sans-serif;letter-spacing:5px;text-transform:uppercase;
+  color:rgba(255,255,255,.25);margin-bottom:8px}
+#bar{width:120px;height:1px;background:rgba(255,255,255,.08);margin-left:auto}
+#bar-fill{height:100%;background:rgba(255,255,255,.35);width:0}
 
-#corner-tl,#corner-tr,#corner-bl,#corner-br{position:absolute;width:18px;height:18px;opacity:.20}
-#corner-tl{top:22px;left:26px;border-top:1px solid #00C8FF;border-left:1px solid #00C8FF}
-#corner-tr{top:22px;right:26px;border-top:1px solid #00C8FF;border-right:1px solid #00C8FF}
-#corner-bl{bottom:22px;left:26px;border-bottom:1px solid #00C8FF;border-left:1px solid #00C8FF}
-#corner-br{bottom:22px;right:26px;border-bottom:1px solid #00C8FF;border-right:1px solid #00C8FF}
+/* state dots */
+#dots{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.dot{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.15);transition:background .6s}
+.dot.on{background:rgba(255,255,255,.65)}
+
+/* hint */
+#hint{position:absolute;top:36px;right:52px;font:400 7px/1 sans-serif;
+  letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.14)}
 </style>
 </head>
 <body>
 <div id="ui">
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
   <div id="brand">Daikin</div>
-  <div id="tagline">Stylish · R-32 · Inverter</div>
-  <div id="corner-tl"></div><div id="corner-tr"></div>
-  <div id="corner-bl"></div><div id="corner-br"></div>
+  <div id="hint">Drag to rotate</div>
+  <div id="headline">
+    <div id="hl-top">Stylish · R-32</div>
+    <div id="hl-main">Crafted<br><em>in precision.</em></div>
+    <div id="hl-sub">Scroll to witness the anatomy of silence — from void to form, from raw engineering to the invisible.</div>
+  </div>
   <div id="phase-wrap">
     <div id="phase">Vue d'ensemble</div>
     <div id="bar"><div id="bar-fill"></div></div>
   </div>
   <div id="dots">
-    <div class="dot active" id="d0"></div>
-    <div class="dot" id="d1"></div>
-    <div class="dot" id="d2"></div>
-    <div class="dot" id="d3"></div>
-    <div class="dot" id="d4"></div>
+    <div class="dot on" id="d0"></div><div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div>
   </div>
-  <div id="hint">Glisser pour pivoter</div>
 </div>
 
-<!-- Classic scripts (work via file://). Order matters: deps first. -->
+<!-- ─── All scripts inlined below by build step ─── -->
 <script>
 /* ===== three.min.js ===== */
 /**
@@ -1310,501 +1321,425 @@ canvas{display:block;position:fixed;inset:0;z-index:0}
 
 
 'use strict';
-const { RoundedBoxGeometry, EffectComposer, RenderPass, UnrealBloomPass } = THREE;
+const {RoundedBoxGeometry,EffectComposer,RenderPass,UnrealBloomPass}=THREE;
 
-/* ───────────────────────────────────────────────
+/* ══════════════════════════════════════════════
    RENDERER
-─────────────────────────────────────────────── */
-const renderer = new THREE.WebGLRenderer({antialias:true, alpha:false, powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled  = true;
-renderer.shadowMap.type     = THREE.PCFSoftShadowMap;
-renderer.toneMapping        = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure= 1.10;
-renderer.outputEncoding     = THREE.sRGBEncoding;
-document.body.insertBefore(renderer.domElement, document.getElementById('ui'));
+══════════════════════════════════════════════ */
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.25;
+renderer.outputEncoding=THREE.sRGBEncoding;
+document.body.insertBefore(renderer.domElement,document.getElementById('ui'));
 
-/* ───────────────────────────────────────────────
-   SCENE & CAMERA
-─────────────────────────────────────────────── */
-const scene  = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(26, innerWidth/innerHeight, 0.01, 120);
-camera.position.set(4.2, 1.8, 6.0);
-camera.lookAt(0, 0, 0);
+/* ══════════════════════════════════════════════
+   SCENE
+══════════════════════════════════════════════ */
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x000000,0.055);
 
-/* ───────────────────────────────────────────────
-   ENVIRONMENT MAP  (subtle dark env for reflections)
-─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════
+   CAMERA
+══════════════════════════════════════════════ */
+const camera=new THREE.PerspectiveCamera(28,innerWidth/innerHeight,.01,100);
+camera.position.set(4.5,2.0,6.5);
+camera.lookAt(0,0,0);
+
+/* ══════════════════════════════════════════════
+   ENVIRONMENT MAP  (studio highlights for specular)
+══════════════════════════════════════════════ */
 {
-  const W=512, H=256;
-  const ec=document.createElement('canvas'); ec.width=W; ec.height=H;
+  const W=512,H=256,ec=document.createElement('canvas');
+  ec.width=W;ec.height=H;
   const ex=ec.getContext('2d');
-  const bg=ex.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#02020C'); bg.addColorStop(.45,'#010108'); bg.addColorStop(1,'#000003');
-  ex.fillStyle=bg; ex.fillRect(0,0,W,H);
-  // horizon glow
-  const hg=ex.createLinearGradient(0,H*.38,0,H*.62);
-  hg.addColorStop(0,'rgba(0,0,0,0)');
-  hg.addColorStop(.5,'rgba(0,60,120,.09)');
-  hg.addColorStop(1,'rgba(0,0,0,0)');
-  ex.fillStyle=hg; ex.fillRect(0,0,W,H);
-  // subtle reflection dots
-  [[80,128],[240,122],[400,130],[168,120],[336,125]].forEach(([x,y])=>{
-    const rg=ex.createRadialGradient(x,y,0,x,y,55);
-    rg.addColorStop(0,'rgba(0,120,220,.06)'); rg.addColorStop(1,'rgba(0,0,0,0)');
-    ex.fillStyle=rg; ex.fillRect(0,0,W,H);
+  // pitch black base
+  ex.fillStyle='#000000';ex.fillRect(0,0,W,H);
+  // top-center spotlight bloom (main key light reflection)
+  const top=ex.createRadialGradient(W*.5,0,0,W*.5,0,H*.7);
+  top.addColorStop(0,'rgba(255,255,240,.38)');
+  top.addColorStop(.4,'rgba(200,210,255,.06)');
+  top.addColorStop(1,'rgba(0,0,0,0)');
+  ex.fillStyle=top;ex.fillRect(0,0,W,H);
+  // rear rim highlight (blue-ish)
+  const rim=ex.createRadialGradient(W*.5,H,0,W*.5,H,H*.9);
+  rim.addColorStop(0,'rgba(80,100,200,.12)');
+  rim.addColorStop(1,'rgba(0,0,0,0)');
+  ex.fillStyle=rim;ex.fillRect(0,0,W,H);
+  // subtle side highlights
+  [[0,H*.4],[W,H*.4]].forEach(([x,y])=>{
+    const sg=ex.createRadialGradient(x,y,0,x,y,H*.5);
+    sg.addColorStop(0,'rgba(120,140,180,.07)');
+    sg.addColorStop(1,'rgba(0,0,0,0)');
+    ex.fillStyle=sg;ex.fillRect(0,0,W,H);
   });
   const et=new THREE.CanvasTexture(ec);
   et.mapping=THREE.EquirectangularReflectionMapping;
   const pmrem=new THREE.PMREMGenerator(renderer);
   scene.environment=pmrem.fromEquirectangular(et).texture;
-  et.dispose(); pmrem.dispose();
+  et.dispose();pmrem.dispose();
 }
 
-/* ───────────────────────────────────────────────
-   POST-PROCESSING  –  Bloom
-─────────────────────────────────────────────── */
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(innerWidth, innerHeight),
-  1.70,   // strength
-  0.38,   // radius
-  0.72    // threshold – only bright emissives bloom
+/* ══════════════════════════════════════════════
+   POST-PROCESSING
+══════════════════════════════════════════════ */
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(
+  new THREE.Vector2(innerWidth,innerHeight),
+  1.20,  // strength
+  0.55,  // radius
+  0.55   // threshold – catch specular peaks
 );
-composer.addPass(bloomPass);
+composer.addPass(bloom);
 
-/* ───────────────────────────────────────────────
-   BACKGROUND SPHERE  (deep void)
-─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════
+   LIGHTS  –  dramatic single-spot aesthetic
+══════════════════════════════════════════════ */
+scene.add(new THREE.AmbientLight(0x03030A,1.0));
+
+// MAIN KEY  –  overhead-front SpotLight, creates drama
+const key=new THREE.SpotLight(0xFFFFF8,5.5,28,Math.PI/5.5,.55,1.8);
+key.position.set(0,11,5);
+key.target.position.set(0,0,0);
+scene.add(key);scene.add(key.target);
+key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.near=2;key.shadow.camera.far=28;
+key.shadow.bias=-0.0003;key.shadow.radius=18;
+
+// RIM  –  cold blue from behind, separates form from void
+const rim=new THREE.SpotLight(0x8899DD,2.0,22,Math.PI/4,.7,2);
+rim.position.set(1.5,4,-9);
+rim.target.position.set(0,0,0);
+scene.add(rim);scene.add(rim.target);
+
+// FILL  –  barely visible, just to reveal detail on shadow side
+const fill=new THREE.DirectionalLight(0x111122,.20);
+fill.position.set(8,2,3);
+scene.add(fill);
+
+// NEON accents (explode phase)
+const nA=new THREE.PointLight(0x4488FF,.0,8,2);scene.add(nA);
+const nB=new THREE.PointLight(0x88CCFF,.0,6,2);nB.position.set(.4,.1,.4);scene.add(nB);
+const nC=new THREE.PointLight(0x2266FF,.0,10,2);scene.add(nC);
+
+/* ══════════════════════════════════════════════
+   BACKGROUND  –  pure void, very dark gradient
+══════════════════════════════════════════════ */
 {
-  const c=document.createElement('canvas'); c.width=2; c.height=512;
-  const cx=c.getContext('2d');
-  const g=cx.createLinearGradient(0,0,0,512);
-  g.addColorStop(0,'#04040F'); g.addColorStop(.5,'#020208'); g.addColorStop(1,'#010103');
-  cx.fillStyle=g; cx.fillRect(0,0,2,512);
+  const bc=document.createElement('canvas');bc.width=2;bc.height=512;
+  const bx=bc.getContext('2d');
+  const bg=bx.createLinearGradient(0,0,0,512);
+  bg.addColorStop(0,'#03030A');bg.addColorStop(.6,'#010105');bg.addColorStop(1,'#000000');
+  bx.fillStyle=bg;bx.fillRect(0,0,2,512);
   scene.add(new THREE.Mesh(
-    new THREE.SphereGeometry(70,24,12),
-    new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.BackSide,depthWrite:false})
+    new THREE.SphereGeometry(60,16,8),
+    new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(bc),side:THREE.BackSide,depthWrite:false})
   ));
 }
 
-/* ───────────────────────────────────────────────
-   LIGHTS
-─────────────────────────────────────────────── */
-scene.add(new THREE.AmbientLight(0x040410, 1.0));
-
-// Key – warm white, upper-left-front, soft shadow
-const kl = new THREE.DirectionalLight(0xFFFFF5, 2.4);
-kl.position.set(-4, 10, 5);
-kl.castShadow = true;
-kl.shadow.mapSize.set(2048, 2048);
-Object.assign(kl.shadow.camera,{near:1,far:25,left:-8,right:8,top:8,bottom:-8});
-kl.shadow.bias = -0.0004;
-kl.shadow.radius = 14;
-scene.add(kl);
-
-// Rim – cold white from behind, edge separation
-const rl = new THREE.DirectionalLight(0xE8EEFF, 0.65);
-rl.position.set(2, 6, -8);
-scene.add(rl);
-
-// Fill – very dim right side
-const fl = new THREE.DirectionalLight(0xCCCCDD, 0.15);
-fl.position.set(9, 1, 3);
-scene.add(fl);
-
-// Under-light – cold bottom fill, dramatic
-const ul = new THREE.DirectionalLight(0x000814, 0.0);
-ul.position.set(0, -4, 2);
-scene.add(ul);
-
-// Neon accents (animated)
-const nA = new THREE.PointLight(0x00CCFF, 0.0, 7.0, 2); scene.add(nA);
-const nB = new THREE.PointLight(0x0044FF, 0.0, 5.0, 2); nB.position.set(0.4,0.1,0.3); scene.add(nB);
-const nC = new THREE.PointLight(0x00AAFF, 0.0, 9.0, 2); scene.add(nC);
-const nD = new THREE.PointLight(0x00FFCC, 0.0, 4.0, 2); nD.position.set(-0.4,-0.2,0.4); scene.add(nD);
-
-/* ───────────────────────────────────────────────
-   PARTICLES  –  bokeh atmosphere
-─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════
+   PARTICLES  –  micro dust, barely visible
+══════════════════════════════════════════════ */
 {
-  const N=900, pos=new Float32Array(N*3), col=new Float32Array(N*3), siz=new Float32Array(N);
-  const c1=new THREE.Color(0x2244CC), c2=new THREE.Color(0xAABBEE), c3=new THREE.Color(0x003366);
-  for(let i=0;i<N;i++){
-    pos[i*3]=(Math.random()-.5)*60; pos[i*3+1]=(Math.random()-.5)*36; pos[i*3+2]=(Math.random()-.5)*45-6;
-    const c=[c1,c2,c3][Math.floor(Math.random()*3)];
-    col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
-    siz[i]=0.012+Math.random()*0.018;
-  }
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
-  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({
-    size:0.015, sizeAttenuation:true, vertexColors:true,
-    transparent:true, opacity:0.28, blending:THREE.AdditiveBlending, depthWrite:false
+  const N=600,pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){pos[i*3]=(Math.random()-.5)*50;pos[i*3+1]=(Math.random()-.5)*28;pos[i*3+2]=(Math.random()-.5)*38-5;}
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(pg,new THREE.PointsMaterial({
+    color:0x4466AA,size:.010,sizeAttenuation:true,
+    transparent:true,opacity:.20,blending:THREE.AdditiveBlending,depthWrite:false
   })));
 }
 
-/* ───────────────────────────────────────────────
-   UNIT DIMENSIONS  795×295×225 mm → scale 3.0 wide
-─────────────────────────────────────────────── */
-const UW=3.0, UH=3.0*295/795, UD=3.0*225/795;
+/* ══════════════════════════════════════════════
+   UNIT DIMS
+══════════════════════════════════════════════ */
+const UW=3.0,UH=3.0*295/795,UD=3.0*225/795;
 
-/* ───────────────────────────────────────────────
-   MATERIALS  –  MeshPhysicalMaterial for realism
-─────────────────────────────────────────────── */
-const M = {
-  // Matte black ABS with clearcoat (rear body, top cover)
-  body: new THREE.MeshPhysicalMaterial({
-    color:0x0C0C11, roughness:0.82, metalness:0.10,
-    clearcoat:0.20, clearcoatRoughness:0.55
-  }),
-  // Premium gloss front panel – the hero piece
-  front: new THREE.MeshPhysicalMaterial({
-    color:0x10101A, roughness:0.68, metalness:0.18,
-    clearcoat:0.90, clearcoatRoughness:0.10,
-    reflectivity:0.55, envMapIntensity:1.4
-  }),
-  // Interior housing – off-white plastic
-  inner: new THREE.MeshPhysicalMaterial({
-    color:0xBBC2CE, roughness:0.70, metalness:0.04,
-    clearcoat:0.10, clearcoatRoughness:0.65
-  }),
-  // Aluminum fins – brushed metal
-  alu: new THREE.MeshPhysicalMaterial({
-    color:0x1E2A38, roughness:0.18, metalness:0.98,
-    envMapIntensity:2.0
-  }),
-  finSep: new THREE.MeshPhysicalMaterial({
-    color:0x0D1520, roughness:0.25, metalness:0.95,
-    envMapIntensity:1.8
-  }),
-  // PCB – dark green, emissive
+/* ══════════════════════════════════════════════
+   MATERIAL PALETTE  –  chrome obsidian
+══════════════════════════════════════════════ */
+function mkMat(o){
+  return new THREE.MeshPhysicalMaterial(Object.assign({
+    metalness:.95,roughness:.08,
+    clearcoat:1.0,clearcoatRoughness:.06,
+    envMapIntensity:2.8,reflectivity:1.0
+  },o));
+}
+const M={
+  // Main shell parts – deep obsidian chrome
+  body:    mkMat({color:0x0A0A0F}),
+  front:   mkMat({color:0x0D0D14,roughness:.06,clearcoatRoughness:.03,envMapIntensity:3.2}),
+  inner:   mkMat({color:0x1A1E28,roughness:.22,metalness:.70,clearcoat:.50,envMapIntensity:1.8}),
+  // Aluminium heat exchanger – brushed chrome
+  alu:     mkMat({color:0x1C2530,roughness:.12,metalness:.98,envMapIntensity:3.5}),
+  finSep:  mkMat({color:0x0E1520,roughness:.18,metalness:.96,envMapIntensity:2.8}),
+  // Steel bracket
+  metal:   mkMat({color:0x181E28,roughness:.20,metalness:.94,envMapIntensity:2.2}),
+  // Fan – dark chrome
+  fan:     mkMat({color:0x0C0C12,roughness:.15,metalness:.88,clearcoat:.70}),
+  // PCB – dark green, emissive traces
   pcb: new THREE.MeshPhysicalMaterial({
-    color:0x051206, roughness:0.62, metalness:0.06,
-    emissive:new THREE.Color(0x001A06), emissiveIntensity:1.8
+    color:0x040C06,roughness:.55,metalness:.05,
+    emissive:new THREE.Color(0x001A08),emissiveIntensity:3.5,
+    clearcoat:.3,clearcoatRoughness:.5
   }),
-  // Fan / turbine
-  fan: new THREE.MeshPhysicalMaterial({
-    color:0x111115, roughness:0.82, metalness:0.18,
-    clearcoat:0.15, clearcoatRoughness:0.70
-  }),
-  // Drain pan – light grey plastic
-  drain: new THREE.MeshPhysicalMaterial({
-    color:0xC0C8D5, roughness:0.68, metalness:0.0
-  }),
-  // Vane – very dark matte
-  vane: new THREE.MeshPhysicalMaterial({
-    color:0x090910, roughness:0.90, metalness:0.08,
-    clearcoat:0.12, clearcoatRoughness:0.80
-  }),
-  // Air filter – translucent mesh
+  // Drain pan – lighter tone
+  drain:   mkMat({color:0x2C3040,roughness:.35,metalness:.60,clearcoat:.40}),
+  // Air vane
+  vane:    mkMat({color:0x080810,roughness:.10,clearcoatRoughness:.04}),
+  // Filter – translucent mesh
   filter: new THREE.MeshPhysicalMaterial({
-    color:0x111118, roughness:0.88, metalness:0.0,
-    transparent:true, opacity:0.78
+    color:0x0A0A12,roughness:.80,metalness:.05,
+    transparent:true,opacity:.72,
+    clearcoat:.2,clearcoatRoughness:.8
   }),
-  // Mounting bracket – galvanized steel
-  metal: new THREE.MeshPhysicalMaterial({
-    color:0x1A2030, roughness:0.38, metalness:0.88,
-    envMapIntensity:1.6
-  }),
-  // Deep void for holes
-  void: new THREE.MeshPhysicalMaterial({
-    color:0x020204, roughness:1.0, metalness:0.0
-  }),
-  // Emissive neon – will bloom
-  neonLine: new THREE.MeshStandardMaterial({
-    color:0x002244, roughness:0.3, metalness:0.0,
-    emissive:new THREE.Color(0x00C8FF), emissiveIntensity:6.0
+  void: new THREE.MeshPhysicalMaterial({color:0x010102,roughness:1,metalness:0}),
+  // Neon strip – max emissive for bloom
+  neon: new THREE.MeshStandardMaterial({
+    color:0x001122,emissive:new THREE.Color(0x00B4FF),emissiveIntensity:10,
+    transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false
   }),
 };
 
-/* ───────────────────────────────────────────────
+/* ══════════════════════════════════════════════
    HELPERS
-─────────────────────────────────────────────── */
-function clamp01(v){return Math.max(0,Math.min(1,v));}
-function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
-function easeOut(t){return 1-Math.pow(1-t,3);}
-function easeIn(t){return t*t*t;}
-function easeOutBack(t){const c=1.70158+1,b=1.70158;return 1+c*Math.pow(t-1,3)+b*Math.pow(t-1,2);}
+══════════════════════════════════════════════ */
+function c01(v){return Math.max(0,Math.min(1,v));}
+function eIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+function eOut(t){return 1-Math.pow(1-t,3);}
+function eIn(t){return t*t*t;}
+function eBack(t){const s=1.70158+1;return 1+s*Math.pow(t-1,3)+1.70158*Math.pow(t-1,2);}
 function lerp(a,b,t){return a+(b-a)*t;}
-
-// Rounded box shorthand: rbx(w,h,d, radius, segs=3)
 function rbx(w,h,d,r,s=3){
   const safe=Math.min(r,w/2*.98,h/2*.98,d/2*.98);
   return new RoundedBoxGeometry(w,h,d,s,safe);
 }
 
 function mkLabel(title,sub){
-  const W=340,H=78;
-  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const W=340,H=76,c=document.createElement('canvas');
+  c.width=W;c.height=H;
   const cx=c.getContext('2d');
   cx.clearRect(0,0,W,H);
-  // glass bg
-  cx.fillStyle='rgba(2,5,14,0.92)'; cx.beginPath();
-  cx.roundRect(4,4,W-8,H-8,3); cx.fill();
-  cx.strokeStyle='rgba(0,175,255,0.35)'; cx.lineWidth=1;
-  cx.strokeRect(4,4,W-8,H-8);
-  // left accent bar
-  const ab=cx.createLinearGradient(4,4,4,H-4);
-  ab.addColorStop(0,'rgba(0,195,255,0.9)');ab.addColorStop(1,'rgba(0,100,200,0.4)');
-  cx.fillStyle=ab; cx.fillRect(4,4,3,H-8);
-  // title
-  cx.fillStyle='rgba(220,235,255,0.95)'; cx.font='600 15px "Helvetica Neue",Arial';
-  cx.fillText(title,14,28);
-  // sub
-  cx.fillStyle='rgba(0,180,255,0.68)'; cx.font='400 11px "Helvetica Neue",Arial';
-  cx.fillText(sub,14,48);
+  cx.fillStyle='rgba(3,3,10,0.88)';
+  cx.beginPath();if(cx.roundRect)cx.roundRect(4,4,W-8,H-8,3);else cx.rect(4,4,W-8,H-8);cx.fill();
+  cx.strokeStyle='rgba(255,255,255,.15)';cx.lineWidth=.8;cx.strokeRect(4.5,4.5,W-9,H-9);
+  cx.fillStyle='rgba(255,255,255,.80)';cx.fillRect(4,4,2.5,H-8);
+  cx.fillStyle='rgba(255,255,255,.90)';cx.font='500 14px "Helvetica Neue",Arial';cx.fillText(title,14,27);
+  cx.fillStyle='rgba(255,255,255,.40)';cx.font='300 10px "Helvetica Neue",Arial';cx.fillText(sub,14,46);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({
-    map:new THREE.CanvasTexture(c),transparent:true,opacity:0.0,depthWrite:false
+    map:new THREE.CanvasTexture(c),transparent:true,opacity:0,depthWrite:false
   }));
-  sp.scale.set(1.50,0.345,1);
+  sp.scale.set(1.50,.335,1);
   return sp;
 }
 
-/* ───────────────────────────────────────────────
+/* ══════════════════════════════════════════════
    COMPONENT SYSTEM
-─────────────────────────────────────────────── */
-const unitGroup = new THREE.Group();
+══════════════════════════════════════════════ */
+const unitGroup=new THREE.Group();
 scene.add(unitGroup);
-const COMPS = [];
+const COMPS=[];
 
-function addComp({meshDefs, asmPos, explodeVec, rotTarget, delay, lt, ls, labelOff, edgeCol}){
-  const grp = new THREE.Group();
+function addComp({meshDefs,asmPos,explodeVec,rotTarget,delay,lt,ls,labelOff}){
+  const grp=new THREE.Group();
   grp.position.copy(asmPos);
-  const edgeMats = [];
+  const edgeMats=[];
 
   meshDefs.forEach(def=>{
     const {geo,mat,px=0,py=0,pz=0,rx=0,ry=0,rz=0,noEdge=false}=def;
     const m=new THREE.Mesh(geo,mat);
-    m.position.set(px,py,pz);
-    m.rotation.set(rx,ry,rz);
-    m.castShadow=true; m.receiveShadow=true;
+    m.position.set(px,py,pz);m.rotation.set(rx,ry,rz);
+    m.castShadow=true;m.receiveShadow=true;
     grp.add(m);
-
     if(!noEdge){
-      // Edge glow – will bloom via bloom pass
-      const el=new THREE.LineSegments(
-        new THREE.EdgesGeometry(geo),
-        new THREE.LineBasicMaterial({
-          color:edgeCol||0x00CCFF,
-          transparent:true,opacity:0.0,
-          blending:THREE.AdditiveBlending,depthWrite:false
-        })
-      );
-      el.position.set(px,py,pz);
-      el.rotation.set(rx,ry,rz);
-      grp.add(el);
-      edgeMats.push(el.material);
-
-      // Back-side emissive halo (makes bloom pop)
-      const haloMat=new THREE.MeshBasicMaterial({
-        color:edgeCol||0x002233,transparent:true,opacity:0,
+      // emissive halo – blooms when exploded
+      const hMat=new THREE.MeshBasicMaterial({
+        color:0xFFFFFF,transparent:true,opacity:0,
         blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.BackSide
       });
-      const halo=new THREE.Mesh(geo,haloMat);
-      halo.position.set(px,py,pz);
-      halo.rotation.set(rx,ry,rz);
-      halo.scale.setScalar(1.035);
-      grp.add(halo);
-      edgeMats.push({bloom:true,mat:haloMat});
+      const h=new THREE.Mesh(geo,hMat);
+      h.position.set(px,py,pz);h.rotation.set(rx,ry,rz);h.scale.setScalar(1.025);
+      grp.add(h);edgeMats.push(hMat);
     }
   });
 
   const lbl=mkLabel(lt,ls);
-  if(labelOff) lbl.position.copy(labelOff); else lbl.position.y=0.32;
+  if(labelOff)lbl.position.copy(labelOff);else lbl.position.y=.32;
   grp.add(lbl);
   unitGroup.add(grp);
-
   COMPS.push({
-    grp, edgeMats, labelMat:lbl.material,
-    asmPos:asmPos.clone(),
-    explodeVec:explodeVec.clone(),
+    grp,edgeMats,labelMat:lbl.material,
+    asmPos:asmPos.clone(),explodeVec:explodeVec.clone(),
     rotTarget:rotTarget||new THREE.Euler(0,0,0),
+    // runtime state
+    vel:new THREE.Vector3(),driftRot:new THREE.Euler(
+      (Math.random()-.5)*.008,(Math.random()-.5)*.012,(Math.random()-.5)*.006
+    ),
     delay
   });
 }
 
-/* ───────────────────────────────────────────────
-   10 COMPONENTS  (RoundedBoxGeometry everywhere)
-─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════
+   10 COMPONENTS
+══════════════════════════════════════════════ */
 
-/* 1 · Platine de fixation – galvanised steel bracket */
+/* 1 · Platine de fixation */
 addComp({
   meshDefs:[
-    {geo:rbx(3.18,1.22,0.042, 0.010), mat:M.metal},
-    {geo:new THREE.CylinderGeometry(.028,.028,.045,14),mat:M.void,px:-1.20,py:.46,rz:Math.PI/2,noEdge:true},
-    {geo:new THREE.CylinderGeometry(.028,.028,.045,14),mat:M.void,px: 1.20,py:.46,rz:Math.PI/2,noEdge:true},
-    {geo:new THREE.CylinderGeometry(.028,.028,.045,14),mat:M.void,px:-1.20,py:-.46,rz:Math.PI/2,noEdge:true},
-    {geo:new THREE.CylinderGeometry(.028,.028,.045,14),mat:M.void,px: 1.20,py:-.46,rz:Math.PI/2,noEdge:true},
-    // reinforcement ribs
-    {geo:rbx(3.16,0.045,0.042, 0.008),mat:M.metal,py:.24,noEdge:true},
-    {geo:rbx(3.16,0.045,0.042, 0.008),mat:M.metal,py:-.24,noEdge:true},
+    {geo:rbx(3.18,1.22,.042,.010),mat:M.metal},
+    ...[[-1.2,.46],[1.2,.46],[-1.2,-.46],[1.2,-.46]].map(([px,py])=>({
+      geo:new THREE.CylinderGeometry(.028,.028,.045,14),mat:M.void,px,py,rz:Math.PI/2,noEdge:true
+    })),
+    {geo:rbx(3.14,.042,.042,.008),mat:M.metal,py:.24,noEdge:true},
+    {geo:rbx(3.14,.042,.042,.008),mat:M.metal,py:-.24,noEdge:true},
   ],
   asmPos:new THREE.Vector3(0,0,-UD/2-.022),
-  explodeVec:new THREE.Vector3(0,0,-3.2),
-  rotTarget:new THREE.Euler(0,0.08,0.04),
-  delay:0.0, edgeCol:0x0077EE,
-  lt:'Platine de fixation', ls:'Acier galvanisé · 2 mm',
-  labelOff:new THREE.Vector3(-.7,-.75,0)
+  explodeVec:new THREE.Vector3(0,0,-3.4),
+  rotTarget:new THREE.Euler(0,.15,.06),
+  delay:.00,lt:'Platine de fixation',ls:'Acier galvanisé · 2 mm',
+  labelOff:new THREE.Vector3(-.7,-.78,0)
 });
 
-/* 2 · Carrosserie arrière – main rear shell */
+/* 2 · Carrosserie arrière */
 addComp({
   meshDefs:[
-    {geo:rbx(2.96,1.06,0.72, 0.038), mat:M.inner},
-    // subtle wall thickness detail
-    {geo:rbx(2.80,0.90,0.68, 0.030), mat:M.void, noEdge:true},
+    {geo:rbx(2.96,1.06,.72,.040),mat:M.inner},
+    {geo:rbx(2.78,.88,.66,.032),mat:M.void,noEdge:true},
   ],
   asmPos:new THREE.Vector3(0,0,-.06),
-  explodeVec:new THREE.Vector3(0,0,-1.3),
-  rotTarget:new THREE.Euler(-0.05,0.10,0),
-  delay:0.06, edgeCol:0x3388FF,
-  lt:'Carrosserie arrière', ls:'ABS recyclé · Blanc ivoire',
-  labelOff:new THREE.Vector3(1.15,.65,0)
+  explodeVec:new THREE.Vector3(0,0,-1.4),
+  rotTarget:new THREE.Euler(-.06,.12,0),
+  delay:.06,lt:'Carrosserie arrière',ls:'ABS · Ivoire mat',
+  labelOff:new THREE.Vector3(1.18,.68,0)
 });
 
-/* 3 · Échangeur thermique – aluminium fins + copper tubes */
+/* 3 · Échangeur thermique */
 {
   const fins=[];
-  for(let i=0;i<16;i++) fins.push({
-    geo:rbx(2.52,0.003,0.120, 0.001, 1), mat:M.finSep,
-    py:-.30+i*.040, noEdge:true
+  for(let i=0;i<18;i++)fins.push({
+    geo:rbx(2.52,.003,.118,.001,1),mat:M.finSep,py:-.32+i*.038,noEdge:true
   });
-  // Copper tubes (4 passes)
   const tubes=[];
-  for(let r=0;r<4;r++) tubes.push({
-    geo:new THREE.CylinderGeometry(0.012,0.012,2.52,12),
-    mat:new THREE.MeshPhysicalMaterial({color:0x5A2E10,roughness:0.25,metalness:0.95,envMapIntensity:2}),
-    py:-.20+r*.135, rz:Math.PI/2, noEdge:true
+  for(let r=0;r<4;r++)tubes.push({
+    geo:new THREE.CylinderGeometry(.012,.012,2.52,12),
+    mat:mkMat({color:0x3A1A08,roughness:.20,metalness:.98}),
+    py:-.20+r*.132,rz:Math.PI/2,noEdge:true
   });
   addComp({
-    meshDefs:[
-      {geo:rbx(2.55,0.62,0.115, 0.022), mat:M.alu},
-      ...fins, ...tubes
-    ],
+    meshDefs:[{geo:rbx(2.55,.64,.115,.025),mat:M.alu},...fins,...tubes],
     asmPos:new THREE.Vector3(0,.18,-.15),
-    explodeVec:new THREE.Vector3(.25,1.6,-1.3),
-    rotTarget:new THREE.Euler(-0.12,-0.08,0.05),
-    delay:0.13, edgeCol:0x00EEFF,
-    lt:'Échangeur thermique', ls:'Aluminium / tube cuivre · R-32',
-    labelOff:new THREE.Vector3(.95,.60,0)
+    explodeVec:new THREE.Vector3(.3,1.7,-1.4),
+    rotTarget:new THREE.Euler(-.14,-.10,.06),
+    delay:.13,lt:'Échangeur thermique',ls:'Alu / cuivre · R-32',
+    labelOff:new THREE.Vector3(.98,.65,0)
   });
 }
 
-/* 4 · Turbine centrifuge – cross-flow fan */
+/* 4 · Turbine centrifuge */
 {
-  const blades=[];
-  for(let i=0;i<18;i++){
-    const a=i/18*Math.PI*2;
-    blades.push({
-      geo:rbx(0.022,0.72,0.045, 0.008, 2),
-      mat:M.fan,
-      px:Math.cos(a)*.09, pz:Math.sin(a)*.09,
-      ry:a, noEdge:true
-    });
-  }
+  const blades=Array.from({length:20},(_,i)=>{
+    const a=i/20*Math.PI*2;
+    return{geo:rbx(.020,.74,.040,.007,2),mat:M.fan,
+      px:Math.cos(a)*.092,pz:Math.sin(a)*.092,ry:a,noEdge:true};
+  });
   addComp({
-    meshDefs:[
-      {geo:new THREE.CylinderGeometry(0.118,0.118,2.72,28),mat:M.fan,rz:Math.PI/2},
-      ...blades
-    ],
+    meshDefs:[{geo:new THREE.CylinderGeometry(.120,.120,2.74,32),mat:M.fan,rz:Math.PI/2},...blades],
     asmPos:new THREE.Vector3(0,-.03,.08),
-    explodeVec:new THREE.Vector3(0,1.2,.3),
-    rotTarget:new THREE.Euler(0,0,0.18),
-    delay:0.22, edgeCol:0x55CCFF,
-    lt:'Turbine centrifuge', ls:'Ø 92 mm · PP soufflé · Silencieux',
-    labelOff:new THREE.Vector3(-1.25,.60,0)
+    explodeVec:new THREE.Vector3(0,1.3,.3),
+    rotTarget:new THREE.Euler(0,0,.22),
+    delay:.22,lt:'Turbine centrifuge',ls:'Ø 92 mm · PP · Silencieux',
+    labelOff:new THREE.Vector3(-1.28,.62,0)
   });
 }
 
 /* 5 · Bac à condensats */
 addComp({
   meshDefs:[
-    {geo:rbx(2.72,0.070,0.66, 0.014), mat:M.drain},
-    {geo:new THREE.CylinderGeometry(.018,.018,.085,10),mat:M.void,px:-1.1,noEdge:true},
-    // drain lip
-    {geo:rbx(2.68,0.012,0.018, 0.004),mat:M.drain,py:-.031,pz:.32,noEdge:true},
+    {geo:rbx(2.72,.070,.66,.015),mat:M.drain},
+    {geo:new THREE.CylinderGeometry(.018,.018,.086,10),mat:M.void,px:-1.1,noEdge:true},
+    {geo:rbx(2.66,.012,.018,.004),mat:M.drain,py:-.031,pz:.32,noEdge:true},
   ],
   asmPos:new THREE.Vector3(0,-UH/2+.035,.02),
-  explodeVec:new THREE.Vector3(0,-.95,0),
-  rotTarget:new THREE.Euler(0.10,0,0.05),
-  delay:0.32, edgeCol:0x0077FF,
-  lt:'Bac à condensats', ls:'PS · Anti-corrosion · Évacuation directe',
-  labelOff:new THREE.Vector3(.85,-.45,0)
+  explodeVec:new THREE.Vector3(0,-1.0,0),
+  rotTarget:new THREE.Euler(.12,0,.06),
+  delay:.32,lt:'Bac à condensats',ls:'PS · Anti-corrosion',
+  labelOff:new THREE.Vector3(.88,-.48,0)
 });
 
-/* 6 · Carte électronique – main PCB */
+/* 6 · Carte électronique */
 {
-  // chip geometries
   const chips=[
-    {w:.070,h:.070,d:.026,px:-.10,py:.065,pz:.019,col:0x090909},
-    {w:.090,h:.030,d:.020,px:.092,py:.082,pz:.019,col:0x1A1A1A},
-    {w:.032,h:.032,d:.016,px:-.10,py:-.072,pz:.019,col:0x001A10},
-    {w:.055,h:.020,d:.016,px:.025,py:-.072,pz:.019,col:0x111111},
-    {w:.018,h:.018,d:.014,px:.085,py:-.055,pz:.019,col:0x00100A},
+    {w:.072,h:.072,d:.027,px:-.10,py:.066,pz:.020,e:false},
+    {w:.090,h:.030,d:.020,px:.092,py:.082,pz:.020,e:false},
+    {w:.034,h:.034,d:.016,px:-.10,py:-.072,pz:.020,e:true},
+    {w:.055,h:.020,d:.016,px:.025,py:-.072,pz:.020,e:false},
+    {w:.020,h:.020,d:.014,px:.085,py:-.055,pz:.020,e:true},
+  ];
+  const traces=[
+    {py:.044},{py:-.012},{py:-.055}
   ];
   addComp({
     meshDefs:[
-      {geo:rbx(.40,.30,.018, 0.006), mat:M.pcb},
-      ...chips.map(({w,h,d,px,py,pz,col})=>({
-        geo:rbx(w,h,d,0.003,2),
-        mat:new THREE.MeshPhysicalMaterial({color:col,roughness:.4,metalness:.55,
-          emissive:col===0x001A10||col===0x00100A?new THREE.Color(0x003A18):undefined,
-          emissiveIntensity:col===0x001A10||col===0x00100A?2.2:0}),
+      {geo:rbx(.40,.30,.018,.006),mat:M.pcb},
+      ...chips.map(({w,h,d,px,py,pz,e})=>({
+        geo:rbx(w,h,d,.003,2),
+        mat:new THREE.MeshPhysicalMaterial({
+          color:e?0x001606:0x0A0A0A,roughness:.4,metalness:.55,
+          emissive:e?new THREE.Color(0x004A1A):undefined,emissiveIntensity:e?4.0:0,
+          clearcoat:.3
+        }),
         px,py,pz,noEdge:true
       })),
-      // PCB traces (emissive green lines)
-      {geo:rbx(.36,.002,.001,0.0005,1),mat:new THREE.MeshStandardMaterial({color:0x001804,roughness:.5,emissive:new THREE.Color(0x003A10),emissiveIntensity:3.0}),py:.04,pz:.01,noEdge:true},
-      {geo:rbx(.36,.002,.001,0.0005,1),mat:new THREE.MeshStandardMaterial({color:0x001804,roughness:.5,emissive:new THREE.Color(0x003A10),emissiveIntensity:3.0}),py:-.04,pz:.01,noEdge:true},
+      ...traces.map(({py})=>({
+        geo:rbx(.34,.002,.001,.0005,1),
+        mat:new THREE.MeshStandardMaterial({
+          color:0x001005,emissive:new THREE.Color(0x005020),emissiveIntensity:5.0
+        }),
+        py,pz:.01,noEdge:true
+      })),
     ],
     asmPos:new THREE.Vector3(UW/2-.26,.08,0),
-    explodeVec:new THREE.Vector3(1.90,.25,0),
-    rotTarget:new THREE.Euler(0.08,0.15,-0.10),
-    delay:0.42, edgeCol:0x00FF88,
-    lt:'Carte électronique principale', ls:'WiFi · Capteurs · IA Daikin',
-    labelOff:new THREE.Vector3(.38,.42,0)
+    explodeVec:new THREE.Vector3(1.95,.28,0),
+    rotTarget:new THREE.Euler(.10,.18,-.12),
+    delay:.42,lt:'Carte électronique',ls:'WiFi · IA Daikin · Capteurs',
+    labelOff:new THREE.Vector3(.40,.44,0)
   });
 }
 
 /* 7 · Filtre à air */
 {
-  const grid=[];
-  for(let i=0;i<14;i++) grid.push({
-    geo:rbx(2.48,0.002,0.009, 0.001,1), mat:new THREE.MeshPhysicalMaterial({color:0x1C1C24,roughness:.90}),
-    py:-.38+i*.062, noEdge:true
-  });
+  const grid=Array.from({length:16},(_,i)=>({
+    geo:rbx(2.48,.002,.009,.001,1),
+    mat:new THREE.MeshPhysicalMaterial({color:0x181820,roughness:.88,metalness:.05}),
+    py:-.42+i*.058,noEdge:true
+  }));
   addComp({
-    meshDefs:[
-      {geo:rbx(2.50,0.82,0.009, 0.006), mat:M.filter},
-      ...grid
-    ],
+    meshDefs:[{geo:rbx(2.50,.85,.009,.006),mat:M.filter},...grid],
     asmPos:new THREE.Vector3(0,.01,UD/2-.10),
-    explodeVec:new THREE.Vector3(-.3,.60,1.2),
-    rotTarget:new THREE.Euler(0.08,-0.12,0),
-    delay:0.52, edgeCol:0x88DDFF,
-    lt:'Filtre à air', ls:'Maille PP · Lavable · Anti-allergènes',
-    labelOff:new THREE.Vector3(-.95,.55,0)
+    explodeVec:new THREE.Vector3(-.3,.65,1.3),
+    rotTarget:new THREE.Euler(.09,-.14,0),
+    delay:.52,lt:'Filtre à air',ls:'Maille PP · Lavable · Anti-allergènes',
+    labelOff:new THREE.Vector3(-.98,.58,0)
   });
 }
 
-/* 8 · Panneau avant Stylish – hero piece */
+/* 8 · Panneau avant Stylish */
 {
-  const ribs=[];
-  for(let i=0;i<9;i++) ribs.push({
-    geo:rbx(0.008,1.04,0.038, 0.003, 2),
-    mat:new THREE.MeshPhysicalMaterial({color:0x0A0A0F,roughness:.90,clearcoat:.15}),
-    px:3.02/2-.020-i*.018, pz:-.004, noEdge:true
-  });
-
-  // DAIKIN logo
-  const lc=document.createElement('canvas'); lc.width=440; lc.height=68;
-  const lx=lc.getContext('2d'); lx.clearRect(0,0,440,68);
-  lx.fillStyle='rgba(95,95,118,0.82)';
-  lx.beginPath(); lx.moveTo(8,54); lx.lineTo(24,28); lx.lineTo(40,54); lx.closePath(); lx.fill();
-  lx.font='600 30px "Helvetica Neue",Arial'; lx.fillStyle='rgba(95,95,118,0.82)';
+  const ribs=Array.from({length:10},(_,i)=>({
+    geo:rbx(.008,1.06,.038,.003,2),
+    mat:mkMat({color:0x0A0A10,roughness:.88,clearcoat:.20}),
+    px:3.02/2-.018-i*.018,pz:-.003,noEdge:true
+  }));
+  const lc=document.createElement('canvas');lc.width=440;lc.height=68;
+  const lx=lc.getContext('2d');lx.clearRect(0,0,440,68);
+  lx.fillStyle='rgba(160,160,180,0.72)';
+  lx.beginPath();lx.moveTo(8,54);lx.lineTo(24,28);lx.lineTo(40,54);lx.closePath();lx.fill();
+  lx.font='500 30px "Helvetica Neue",Arial';lx.fillStyle='rgba(160,160,180,0.72)';
   lx.fillText('DAIKIN',50,52);
   const logoMesh=new THREE.Mesh(
     new THREE.PlaneGeometry(.58,.090),
@@ -1814,242 +1749,260 @@ addComp({
 
   addComp({
     meshDefs:[
-      {geo:rbx(3.02,1.08,0.022, 0.007), mat:M.front},
-      // top grille slot
-      {geo:rbx(3.00,0.016,0.026, 0.004),mat:M.void,py:UH/2-.078,pz:.012,noEdge:true},
-      // air outlet slot
-      {geo:rbx(2.96,0.022,0.025, 0.004),mat:M.void,py:-UH/2+.048,pz:.012,noEdge:true},
+      {geo:rbx(3.02,1.08,.022,.007),mat:M.front},
+      {geo:rbx(3.00,.016,.026,.004),mat:M.void,py:UH/2-.078,pz:.012,noEdge:true},
+      {geo:rbx(2.96,.022,.025,.004),mat:M.void,py:-UH/2+.048,pz:.012,noEdge:true},
       ...ribs
     ],
     asmPos:new THREE.Vector3(0,.035,UD/2+.011),
-    explodeVec:new THREE.Vector3(0,0,2.6),
-    rotTarget:new THREE.Euler(0,0,-0.04),
-    delay:0.60, edgeCol:0x00AAFF,
-    lt:'Panneau avant Stylish', ls:'ABS mat · Noir profond · Finition premium',
-    labelOff:new THREE.Vector3(-.55,.72,0)
+    explodeVec:new THREE.Vector3(0,0,2.7),
+    rotTarget:new THREE.Euler(0,.02,-.04),
+    delay:.60,lt:'Panneau avant Stylish',ls:'ABS mat · Noir profond',
+    labelOff:new THREE.Vector3(-.58,.74,0)
   });
   COMPS[COMPS.length-1].grp.add(logoMesh);
 }
 
-/* 9 · Volet de distribution d'air */
+/* 9 · Volet de distribution */
 addComp({
   meshDefs:[
-    {geo:rbx(2.88,0.030,0.155, 0.010), mat:M.vane},
-    // pivot details
-    {geo:new THREE.CylinderGeometry(0.012,0.012,2.84,8),mat:M.metal,rz:Math.PI/2,noEdge:true},
+    {geo:rbx(2.88,.030,.158,.010),mat:M.vane},
+    {geo:new THREE.CylinderGeometry(.012,.012,2.84,8),mat:M.metal,rz:Math.PI/2,noEdge:true},
   ],
   asmPos:new THREE.Vector3(0,-UH/2+.008,UD/2+.005),
-  explodeVec:new THREE.Vector3(0,-.80,1.6),
-  rotTarget:new THREE.Euler(-0.20,0,0),
-  delay:0.70, edgeCol:0x00AAFF,
-  lt:'Volet de distribution', ls:'5 axes · Mode silencieux · Auto-balayage',
-  labelOff:new THREE.Vector3(.55,-.48,0)
+  explodeVec:new THREE.Vector3(0,-.85,1.7),
+  rotTarget:new THREE.Euler(-.22,0,0),
+  delay:.70,lt:'Volet de distribution',ls:'5 axes · Balayage auto',
+  labelOff:new THREE.Vector3(.58,-.50,0)
 });
 
 /* 10 · Couvercle supérieur */
 addComp({
   meshDefs:[
-    {geo:rbx(3.03,0.052,UD+.012, 0.018), mat:M.body},
-    // intake grille (thin slats at top)
+    {geo:rbx(3.03,.052,UD+.012,.020),mat:M.body},
     ...Array.from({length:8},(_,i)=>({
-      geo:rbx(2.96,0.048,0.008, 0.003, 2),
-      mat:M.void, pz:-UD/2+.035+i*.016, noEdge:true
+      geo:rbx(2.96,.046,.008,.003,2),
+      mat:M.void,pz:-UD/2+.034+i*.016,noEdge:true
     }))
   ],
   asmPos:new THREE.Vector3(0,UH/2-.024,0),
-  explodeVec:new THREE.Vector3(0,1.0,0),
-  rotTarget:new THREE.Euler(-0.06,0,0.06),
-  delay:0.78, edgeCol:0x00AAFF,
-  lt:'Couvercle supérieur', ls:'ABS mat · Soft-touch · Prise d\'air intégré',
-  labelOff:new THREE.Vector3(.55,.40,0)
+  explodeVec:new THREE.Vector3(0,1.05,0),
+  rotTarget:new THREE.Euler(-.07,0,.07),
+  delay:.78,lt:'Couvercle supérieur',ls:'ABS mat · Soft-touch',
+  labelOff:new THREE.Vector3(.58,.42,0)
 });
 
-/* ───────────────────────────────────────────────
-   NEON LED STRIP  –  air outlet (emissive → blooms)
-─────────────────────────────────────────────── */
-const neonStrip = new THREE.Group();
+/* ══════════════════════════════════════════════
+   NEON LED STRIP  (blooms hard)
+══════════════════════════════════════════════ */
+const neonStrip=new THREE.Group();
 unitGroup.add(neonStrip);
-neonStrip.position.set(0, -UH/2+.048, UD/2+.015);
-const stripMats=[];
-[
-  {w:2.88,h:.008,opa:1.0,ei:8.0},
-  {w:2.86,h:.022,opa:.18,ei:3.5},
-  {w:2.84,h:.058,opa:.06,ei:1.2},
-].forEach(({w,h,opa,ei})=>{
-  const mat=new THREE.MeshStandardMaterial({
-    color:0x001A2A, transparent:true, opacity:opa,
-    emissive:new THREE.Color(0x00C4F0), emissiveIntensity:ei,
-    blending:THREE.AdditiveBlending, depthWrite:false
+neonStrip.position.set(0,-UH/2+.048,UD/2+.016);
+const sMs=[];
+[{w:2.88,h:.008,ei:10},{w:2.86,h:.024,ei:4},{w:2.82,h:.065,ei:1.4}].forEach(({w,h,ei})=>{
+  const sm=new THREE.MeshStandardMaterial({
+    color:0x00080F,emissive:new THREE.Color(0x00B4FF),emissiveIntensity:ei,
+    transparent:true,opacity:ei>5?1:.15,
+    blending:THREE.AdditiveBlending,depthWrite:false
   });
-  neonStrip.add(new THREE.Mesh(new THREE.PlaneGeometry(w,h), mat));
-  stripMats.push(mat);
+  neonStrip.add(new THREE.Mesh(new THREE.PlaneGeometry(w,h),sm));
+  sMs.push(sm);
 });
 
-/* ───────────────────────────────────────────────
-   FLOOR
-─────────────────────────────────────────────── */
-const fMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(30,30),
+/* ══════════════════════════════════════════════
+   FLOOR  –  reflective dark mirror
+══════════════════════════════════════════════ */
+const floor=new THREE.Mesh(
+  new THREE.PlaneGeometry(40,40),
   new THREE.MeshPhysicalMaterial({
-    color:0x030308, roughness:0.88, metalness:0.02,
-    clearcoat:0.05, clearcoatRoughness:0.90,
-    envMapIntensity:0.4
+    color:0x020205,roughness:.06,metalness:.0,
+    clearcoat:.95,clearcoatRoughness:.08,
+    envMapIntensity:1.2
   })
 );
-fMesh.rotation.x = -Math.PI/2;
-fMesh.position.y = -UH/2-1.05;
-fMesh.receiveShadow = true;
-scene.add(fMesh);
+floor.rotation.x=-Math.PI/2;
+floor.position.y=-UH/2-1.08;
+floor.receiveShadow=true;
+scene.add(floor);
 
-/* ───────────────────────────────────────────────
+// Floor neon glow pool (blooms up from floor during explode)
+const glowPool=new THREE.Mesh(
+  new THREE.CircleGeometry(2.2,48),
+  new THREE.MeshBasicMaterial({
+    color:0x0033AA,transparent:true,opacity:0,
+    blending:THREE.AdditiveBlending,depthWrite:false
+  })
+);
+glowPool.rotation.x=-Math.PI/2;
+glowPool.position.y=-UH/2-1.06;
+scene.add(glowPool);
+
+/* ══════════════════════════════════════════════
    INTERACTION
-─────────────────────────────────────────────── */
-let drag=false,lx=0,ly=0,velY=0,velX=0;
-let manY=0.4,manX=0.05,autoOrbit=true,autoT=0;
-function dStart(x,y){drag=true;lx=x;ly=y;autoOrbit=false;clearTimeout(dStart._t);}
-function dEnd(){drag=false;dStart._t=setTimeout(()=>{autoOrbit=true;autoT=manY/.22;},6000);}
-function dMove(x,y){if(!drag)return;velY+=(x-lx)*.007;velX+=(y-ly)*.004;lx=x;ly=y;}
-const cvs=renderer.domElement;
-cvs.addEventListener('mousedown',e=>dStart(e.clientX,e.clientY));
-addEventListener('mouseup',dEnd);
-addEventListener('mousemove',e=>dMove(e.clientX,e.clientY));
-cvs.addEventListener('touchstart',e=>{dStart(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
-addEventListener('touchend',dEnd);
-addEventListener('touchmove',e=>dMove(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+══════════════════════════════════════════════ */
+let drag=false,lx=0,ly=0,velY=0,velX=0,manY=.4,manX=.04,autoOrbit=true,autoT=0;
+function dS(x,y){drag=true;lx=x;ly=y;autoOrbit=false;clearTimeout(dS._t);}
+function dE(){drag=false;dS._t=setTimeout(()=>{autoOrbit=true;autoT=manY/.22;},7000);}
+function dM(x,y){if(!drag)return;velY+=(x-lx)*.007;velX+=(y-ly)*.004;lx=x;ly=y;}
+const cv=renderer.domElement;
+cv.addEventListener('mousedown',e=>dS(e.clientX,e.clientY));
+addEventListener('mouseup',dE);
+addEventListener('mousemove',e=>dM(e.clientX,e.clientY));
+cv.addEventListener('touchstart',e=>{dS(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+addEventListener('touchend',dE);
+addEventListener('touchmove',e=>dM(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
 
-/* ───────────────────────────────────────────────
+/* ══════════════════════════════════════════════
    STATE MACHINE
-─────────────────────────────────────────────── */
-const STATES=['Vue d\'ensemble','Décomposition','Vue éclatée','Assemblage','Vue finale'];
-const DURS  =[6.0, 5.5, 8.0, 5.5, 5.0];
-let st=0, stT=0;
+══════════════════════════════════════════════ */
+const STATES=["Vue d'ensemble","Décomposition","Vue éclatée","Assemblage","Vue finale"];
+const DURS=[6.5,6.0,8.5,5.5,5.5];
+let st=0,stT=0;
 document.getElementById('phase').textContent=STATES[0];
+function setDots(i){for(let k=0;k<5;k++)document.getElementById('d'+k).className='dot'+(k===i?' on':'');}
 
-function setDots(i){
-  for(let k=0;k<5;k++) document.getElementById('d'+k).className='dot'+(k===i?' active':'');
+const HL=[
+  {top:'Stylish · R-32',main:'Crafted<br><em>in precision.</em>',sub:'Scroll to witness the anatomy of silence — from void to form, from raw engineering to the invisible.'},
+  {top:'Anatomie',main:'Layer<br><em>by layer.</em>',sub:'Each component engineered for a singular purpose. Silence. Efficiency. Form.'},
+  {top:'Vue éclatée',main:'Every<br><em>detail.</em>',sub:'12 components. Zero compromise. The architecture of comfort, exposed.'},
+  {top:'Assemblage',main:'Back<br><em>to one.</em>',sub:'Precision recalled. Every part in its place, every tolerance met.'},
+  {top:'Daikin Stylish',main:'Materialized<br><em>from mist.</em>',sub:'R-32 · Inverter · Made in Japan · A·5·W'}
+];
+const hlEl=document.getElementById('headline');
+function setHL(i){
+  const h=HL[i];
+  hlEl.style.opacity='0';hlEl.style.transform='translateY(12px)';
+  setTimeout(()=>{
+    document.getElementById('hl-top').textContent=h.top;
+    document.getElementById('hl-main').innerHTML=h.main;
+    document.getElementById('hl-sub').textContent=h.sub;
+    hlEl.style.opacity='1';hlEl.style.transform='translateY(0)';
+  },400);
 }
+setTimeout(()=>setHL(0),1200);
 
-const camR={radius:6.0,phi:.28};
-
-/* intro camera */
-const introStart=new THREE.Vector3(0.0,0.02,1.4);
-const introEnd  =new THREE.Vector3(4.2,1.8,6.0);
-let introT=0, introDone=false;
-
-/* ───────────────────────────────────────────────
-   ANIMATION LOOP
-─────────────────────────────────────────────── */
-const clock=new THREE.Clock();
+// camera rig
+const camR={r:6.0,phi:.30};
+const introS=new THREE.Vector3(.0,.02,1.2);
+const introE=new THREE.Vector3(4.5,2.0,6.5);
+let introT=0,introDone=false;
 const tmpV=new THREE.Vector3();
+
+/* ══════════════════════════════════════════════
+   ANIMATE
+══════════════════════════════════════════════ */
+const clock=new THREE.Clock();
 
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),.05);
   const et=clock.elapsedTime;
 
-  /* ── intro cam ── */
+  // intro dolly
   if(!introDone){
     introT+=dt;
-    const p=1-Math.pow(1-clamp01(introT/2.8),3);
-    camera.position.lerpVectors(introStart,introEnd,p);
+    const p=1-Math.pow(1-c01(introT/3.0),4);
+    camera.position.lerpVectors(introS,introE,p);
     camera.lookAt(0,0,0);
-    if(p>=1) introDone=true;
+    if(p>=1)introDone=true;
   }
 
-  /* ── state advance ── */
+  // state
   stT+=dt;
   if(stT>DURS[st]){
-    stT=0; st=(st+1)%STATES.length;
+    stT=0;st=(st+1)%5;
     document.getElementById('phase').textContent=STATES[st];
     document.getElementById('bar-fill').style.width='0';
-    setDots(st);
+    setDots(st);setHL(st);
   }
-  document.getElementById('bar-fill').style.width=(clamp01(stT/DURS[st])*100)+'%';
+  document.getElementById('bar-fill').style.width=(c01(stT/DURS[st])*100)+'%';
 
-  /* ── explosion progress ── */
+  // explode progress
   let explP=0;
   if     (st===0) explP=0;
-  else if(st===1) explP=easeOut(clamp01(stT/DURS[1]));
-  else if(st===2) explP=1.0;
-  else if(st===3) explP=1.0-easeIn(clamp01(stT/DURS[3]));
+  else if(st===1) explP=eOut(c01(stT/DURS[1]));
+  else if(st===2) explP=1;
+  else if(st===3) explP=1-eIn(c01(stT/DURS[3]));
   else            explP=0;
 
-  /* ── update components ── */
+  // component update
   COMPS.forEach(comp=>{
-    const raw=clamp01((explP-comp.delay)/(1-comp.delay*.5));
-    const cpP=clamp01(easeIO(raw));
+    const raw=c01((explP-comp.delay)/(1-comp.delay*.5));
+    // easeBack gives slight overshoot on the way out
+    const cpP=c01(st===1||st===3?eIO(raw):raw===1?eBack(c01((raw-.0)/.98)):eIO(raw));
 
-    // Position
     tmpV.copy(comp.asmPos).addScaledVector(comp.explodeVec,cpP);
     comp.grp.position.copy(tmpV);
 
-    // Rotation – each part rotates slightly as it explodes (organic feel)
-    comp.grp.rotation.x = comp.rotTarget.x * cpP;
-    comp.grp.rotation.y = comp.rotTarget.y * cpP;
-    comp.grp.rotation.z = comp.rotTarget.z * cpP;
+    // tumble rotation with slight continuous drift in exploded state
+    const driftFactor=(st===2)?1:0;
+    comp.grp.rotation.x=lerp(comp.grp.rotation.x,comp.rotTarget.x*cpP+comp.driftRot.x*et*driftFactor,dt*3);
+    comp.grp.rotation.y=lerp(comp.grp.rotation.y,comp.rotTarget.y*cpP+comp.driftRot.y*et*driftFactor,dt*3);
+    comp.grp.rotation.z=lerp(comp.grp.rotation.z,comp.rotTarget.z*cpP+comp.driftRot.z*et*driftFactor,dt*3);
 
-    // Edge glow
-    const glow=cpP>.04?easeOut((cpP-.04)/.96):0;
-    comp.edgeMats.forEach(em=>{
-      if(em.bloom) em.mat.opacity=glow*.08;
-      else em.opacity=glow*.70;
-    });
+    // halo bloom
+    const glow=cpP>.03?eOut((cpP-.03)/.97):0;
+    comp.edgeMats.forEach(em=>{em.opacity=glow*.12;});
 
-    // Labels fade in during orbit phase
-    const lblT=(st===2&&cpP>.90)?clamp01((stT-2.0)/2.0):0;
-    comp.labelMat.opacity=lerp(comp.labelMat.opacity,lblT,dt*2.2);
+    // labels
+    const lblT=(st===2&&cpP>.88)?c01((stT-2.2)/2.0):0;
+    comp.labelMat.opacity=lerp(comp.labelMat.opacity,lblT,dt*2.0);
   });
 
-  /* ── neon lights ── */
-  nA.intensity = explP * 4.5;
-  nB.intensity = explP * 2.8;
-  nC.intensity = explP * 2.2;
-  nD.intensity = explP * 1.6;
-  nC.position.set(Math.sin(et*.55)*.6, Math.cos(et*.38)*.25, explP*.8);
-  nD.position.set(-Math.sin(et*.42)*.5, Math.cos(et*.60)*.2, -explP*.5);
+  // neons
+  const nAmp=eOut(explP);
+  nA.intensity=nAmp*5.0;nB.intensity=nAmp*3.0;nC.intensity=nAmp*2.5;
+  nC.position.set(Math.sin(et*.55)*.7,Math.cos(et*.38)*.3,nAmp*.9);
+  nA.position.set(-Math.sin(et*.42)*.6,0,0);
 
-  /* ── LED neon strip at air outlet ── */
-  const stripOn=(st===0||st===4)?1:1-explP*.45;
-  const pulse=.42+.30*Math.sin(et*1.6+0.5);
-  stripMats[0].emissiveIntensity = 8.0*pulse*stripOn;
-  stripMats[1].emissiveIntensity = 3.5*pulse*stripOn;
-  stripMats[2].emissiveIntensity = 1.2*pulse*stripOn;
-  stripMats[0].opacity = pulse*stripOn;
-  stripMats[1].opacity = .18*stripOn;
-  stripMats[2].opacity = .06*stripOn;
+  // floor glow
+  glowPool.material.opacity=nAmp*.18+Math.sin(et*1.4)*.03;
 
-  /* ── orbit camera ── */
+  // LED strip
+  const sOn=(st===0||st===4)?1:1-explP*.38;
+  const pulse=.44+.28*Math.sin(et*1.55+.4);
+  sMs[0].emissiveIntensity=10*pulse*sOn;
+  sMs[1].emissiveIntensity=4*pulse*sOn;
+  sMs[2].emissiveIntensity=1.4*pulse*sOn;
+  sMs[0].opacity=sOn*pulse;sMs[1].opacity=.15*sOn;sMs[2].opacity=.05*sOn;
+
+  // spotlight follows group slightly
+  key.position.set(
+    lerp(key.position.x,0,dt*.8),
+    lerp(key.position.y,11+explP*.5,dt*.8),
+    lerp(key.position.z,5+explP*1.5,dt*.8)
+  );
+
+  // orbit
   if(introDone){
-    if(autoOrbit){autoT+=dt;manY=autoT*.22;manX=Math.sin(autoT*.28)*.040;}
-    else{manY+=velY;manX+=velX;manX=Math.max(-.40,Math.min(.40,manX));velY*=.90;velX*=.90;}
-    const tgtR  ={0:5.8,1:6.8,2:7.8,3:6.4,4:5.4}[st]||6.0;
-    const tgtPhi={0:.26,1:.32,2:.38,3:.30,4:.22}[st]||.28;
-    camR.radius = lerp(camR.radius,tgtR,dt*1.2);
-    camR.phi    = lerp(camR.phi,tgtPhi,dt*1.5);
+    if(autoOrbit){autoT+=dt;manY=autoT*.22;manX=Math.sin(autoT*.26)*.038;}
+    else{manY+=velY;manX+=velX;manX=Math.max(-.42,Math.min(.42,manX));velY*=.90;velX*=.90;}
+    const tR={0:5.8,1:7.0,2:8.0,3:6.5,4:5.5}[st]||6.2;
+    const tP={0:.28,1:.33,2:.40,3:.31,4:.24}[st]||.30;
+    camR.r=lerp(camR.r,tR,dt*1.1);camR.phi=lerp(camR.phi,tP,dt*1.3);
     camera.position.set(
-      Math.sin(manY)*Math.cos(camR.phi)*camR.radius,
-      Math.sin(camR.phi)*camR.radius+manX*1.5,
-      Math.cos(manY)*Math.cos(camR.phi)*camR.radius
+      Math.sin(manY)*Math.cos(camR.phi)*camR.r,
+      Math.sin(camR.phi)*camR.r+manX*1.5,
+      Math.cos(manY)*Math.cos(camR.phi)*camR.r
     );
     camera.lookAt(0,.04,0);
   }
 
-  /* ── gentle float ── */
-  unitGroup.position.y = Math.sin(et*.42)*.020;
+  // float
+  unitGroup.position.y=Math.sin(et*.40)*.018;
 
-  /* ── PCB blink ── */
-  M.pcb.emissiveIntensity = 1.6+.8*Math.sin(et*3.1);
+  // PCB blink
+  M.pcb.emissiveIntensity=3.0+1.2*Math.sin(et*2.9);
 
   composer.render();
 }
 animate();
 
 addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
+  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight);
   composer.setSize(innerWidth,innerHeight);
-  bloomPass.resolution.set(innerWidth,innerHeight);
+  bloom.resolution.set(innerWidth,innerHeight);
 });
 </script>
 </body>

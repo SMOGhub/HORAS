@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daikin Stylish – Volet 5 axes</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1a1a;
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+canvas{display:block;position:fixed;inset:0;z-index:0}
+
+/* ── white info card (top ~38%) ── */
+#card{
+  position:fixed;top:0;left:0;right:0;
+  height:38%;
+  background:#fff;
+  display:flex;align-items:center;padding:0 48px;
+  z-index:2;pointer-events:none;
+  box-shadow:0 4px 32px rgba(0,0,0,.18);
+}
+#card-inner{overflow:hidden;position:relative;width:100%;height:80px}
+.slide{
+  position:absolute;top:0;left:0;width:100%;
+  transform:translateY(80px);opacity:0;
+  transition:transform .55s cubic-bezier(.22,1,.36,1),opacity .45s ease;
+}
+.slide.active{transform:translateY(0);opacity:1}
+.slide h1{
+  font:700 28px/1.05 'Helvetica Neue',Arial;
+  text-transform:uppercase;letter-spacing:-0.5px;color:#111;
+}
+.slide p{
+  margin-top:8px;font:400 14px/1.4 sans-serif;color:#555;
+}
+/* brand top-right inside card */
+#card-brand{
+  position:absolute;top:0;right:0;height:38%;
+  display:flex;align-items:center;padding-right:48px;
+  z-index:3;pointer-events:none;
+}
+#card-brand span{font:400 11px/1 sans-serif;letter-spacing:4px;text-transform:uppercase;color:#bbb}
+
+/* ── diagram (bottom-left overlay on 3D view) ── */
+#diagram{
+  position:fixed;bottom:28px;left:28px;
+  width:110px;height:110px;
+  background:rgba(255,255,255,.92);
+  border-radius:8px;
+  box-shadow:0 2px 18px rgba(0,0,0,.22);
+  z-index:3;pointer-events:none;
+  transition:opacity .5s;
+}
+#diag-canvas{display:block}
+
+/* ── mode badge (bottom-right) ── */
+#badge{
+  position:fixed;bottom:28px;right:28px;
+  padding:10px 20px;
+  background:rgba(0,0,0,.72);
+  border-radius:30px;
+  font:500 11px/1 sans-serif;letter-spacing:3px;text-transform:uppercase;color:#fff;
+  z-index:3;pointer-events:none;
+  transition:opacity .5s;
+}
+
+/* progress bar */
+#prog{
+  position:fixed;left:0;right:0;
+  top:calc(38% - 3px);
+  height:3px;background:#e5e5e5;z-index:4
+}
+#prog-fill{height:100%;background:#0092D0;width:0;transition:none}
+</style>
+</head>
+<body>
+
+<!-- info card -->
+<div id="card">
+  <div id="card-inner">
+    <div class="slide active" id="s0">
+      <h1>Daikin Stylish</h1>
+      <p>Volet 5 axes · Confort optimal à chaque température</p>
+    </div>
+    <div class="slide" id="s1">
+      <h1>En refroidissement</h1>
+      <p>Jet d'air loin vers l'avant · Confort en zone d'occupation</p>
+    </div>
+    <div class="slide" id="s2">
+      <h1>En chauffage</h1>
+      <p>Soufflage puissant vers le bas · Réchauffement rapide</p>
+    </div>
+    <div class="slide" id="s3">
+      <h1>Balayage automatique</h1>
+      <p>Distribution homogène · Auto-swing 5 axes</p>
+    </div>
+  </div>
+</div>
+<div id="card-brand"><span>Daikin · R-32 · Inverter</span></div>
+
+<!-- progress -->
+<div id="prog"><div id="prog-fill"></div></div>
+
+<!-- diagram -->
+<div id="diagram"><canvas id="diag-canvas" width="110" height="110"></canvas></div>
+
+<!-- mode badge -->
+<div id="badge">Vue d'ensemble</div>
+
+<script src="three.min.js"></script>
+<script src="libjs/geometries/RoundedBoxGeometry.js"></script>
+<script>
+'use strict';
+const {RoundedBoxGeometry}=THREE;
+
+/* ══════════════════════════════════════════
+   RENDERER
+══════════════════════════════════════════ */
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.05;
+renderer.outputEncoding=THREE.sRGBEncoding;
+document.body.insertBefore(renderer.domElement,document.getElementById('card'));
+
+/* ══════════════════════════════════════════
+   SCENE + CAMERA
+══════════════════════════════════════════ */
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xD8DBDF); // light room
+
+const camera=new THREE.PerspectiveCamera(32,innerWidth/innerHeight,.01,60);
+// Close-up from right-front-below  (same feel as LG video)
+camera.position.set(2.8,-0.5,4.0);
+camera.lookAt(0.1,0.0,0);
+
+/* ══════════════════════════════════════════
+   LIGHTS  –  studio product shot
+══════════════════════════════════════════ */
+scene.add(new THREE.AmbientLight(0xD0D8E8,.80));
+
+// Main soft box – upper left front
+const key=new THREE.DirectionalLight(0xFFFFF8,2.4);
+key.position.set(-5,10,6);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);
+key.shadow.camera.near=1;key.shadow.camera.far=28;
+key.shadow.camera.left=-5;key.shadow.camera.right=5;
+key.shadow.camera.top=4;key.shadow.camera.bottom=-4;
+key.shadow.bias=-0.0004;key.shadow.radius=14;
+scene.add(key);
+
+// Fill – right side, softer
+const fill=new THREE.DirectionalLight(0xEEF2FF,0.90);
+fill.position.set(7,3,4);scene.add(fill);
+
+// Rim – from behind, separates unit from wall
+const rim=new THREE.DirectionalLight(0xCCDDFF,0.45);
+rim.position.set(1,5,-7);scene.add(rim);
+
+// Under-fill – subtle, prevents total black on bottom
+const under=new THREE.DirectionalLight(0xDDE5EE,0.28);
+under.position.set(0,-5,4);scene.add(under);
+
+/* ══════════════════════════════════════════
+   ROOM  –  wall + floor
+══════════════════════════════════════════ */
+// Wall (behind unit)
+const wall=new THREE.Mesh(
+  new THREE.PlaneGeometry(24,14),
+  new THREE.MeshStandardMaterial({color:0xE5E8EC,roughness:.95,metalness:0})
+);
+wall.position.z=-.60;wall.receiveShadow=true;scene.add(wall);
+
+// Ceiling
+const ceiling=new THREE.Mesh(
+  new THREE.PlaneGeometry(24,14),
+  new THREE.MeshStandardMaterial({color:0xEDEFF2,roughness:1,metalness:0})
+);
+ceiling.rotation.x=Math.PI/2;ceiling.position.y=3.2;scene.add(ceiling);
+
+// Floor
+const floor=new THREE.Mesh(
+  new THREE.PlaneGeometry(24,14),
+  new THREE.MeshStandardMaterial({color:0xC8CDD6,roughness:.90,metalness:0})
+);
+floor.rotation.x=-Math.PI/2;floor.position.y=-3.5;floor.receiveShadow=true;scene.add(floor);
+
+/* ══════════════════════════════════════════
+   UNIT DIMS  795×295×225 mm → scale 3.0 wide
+══════════════════════════════════════════ */
+const UW=3.0,UH=3.0*295/795,UD=3.0*225/795;
+
+/* ══════════════════════════════════════════
+   MATERIALS  –  matte black product
+══════════════════════════════════════════ */
+function rbx(w,h,d,r,s=3){
+  const safe=Math.min(r,w/2*.98,h/2*.98,d/2*.98);
+  return new RoundedBoxGeometry(w,h,d,s,safe);
+}
+const matBlack=new THREE.MeshStandardMaterial({color:0x0E0E12,roughness:.84,metalness:.10});
+const matFront=new THREE.MeshStandardMaterial({color:0x121218,roughness:.78,metalness:.16});
+const matInner=new THREE.MeshStandardMaterial({color:0xBEC4D0,roughness:.70,metalness:.04});
+const matMetal=new THREE.MeshStandardMaterial({color:0x1A2030,roughness:.30,metalness:.88});
+const matVane =new THREE.MeshStandardMaterial({color:0x0D0D12,roughness:.88,metalness:.08});
+
+/* ══════════════════════════════════════════
+   BUILD ASSEMBLED UNIT
+══════════════════════════════════════════ */
+const unitGroup=new THREE.Group();
+scene.add(unitGroup);
+// Tilt slightly for 3/4 view
+unitGroup.rotation.y=-0.18;
+unitGroup.position.set(-.15,.10,0);
+
+function mk(geo,mat,px=0,py=0,pz=0,rx=0,ry=0,rz=0){
+  const m=new THREE.Mesh(geo,mat);
+  m.position.set(px,py,pz);m.rotation.set(rx,ry,rz);
+  m.castShadow=true;m.receiveShadow=true;
+  return m;
+}
+
+// Mounting plate (back)
+unitGroup.add(mk(rbx(3.18,1.22,.042,.010),matMetal, 0,0,-UD/2-.022));
+
+// Rear housing (main shell)
+unitGroup.add(mk(rbx(2.96,1.06,.72,.040),matInner));
+
+// Top cover
+unitGroup.add(mk(rbx(3.03,.052,UD+.012,.020),matBlack, 0,UH/2-.024,0));
+
+// Front panel (hero piece)
+{
+  const panel=new THREE.Group();
+  panel.add(mk(rbx(3.02,1.08,.022,.007),matFront));
+  // Subtle vertical ribs
+  for(let i=0;i<6;i++){
+    panel.add(mk(rbx(.007,1.04,.032,.003,2),
+      new THREE.MeshStandardMaterial({color:0x0A0A0F,roughness:.90}),
+      3.02/2-.018-i*.022,0,-.004));
+  }
+  // Top inlet slot
+  panel.add(mk(rbx(3.00,.015,.024,.004),matBlack, 0,UH/2-.078,.012));
+  // DAIKIN logo
+  const lc=document.createElement('canvas');lc.width=420;lc.height=62;
+  const lx=lc.getContext('2d');lx.clearRect(0,0,420,62);
+  lx.fillStyle='rgba(90,90,112,0.80)';
+  lx.beginPath();lx.moveTo(8,50);lx.lineTo(22,26);lx.lineTo(36,50);lx.closePath();lx.fill();
+  lx.font='600 28px "Helvetica Neue",Arial';lx.fillStyle='rgba(90,90,112,0.80)';
+  lx.fillText('DAIKIN',46,48);
+  const logo=new THREE.Mesh(
+    new THREE.PlaneGeometry(.56,.085),
+    new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(lc),transparent:true,alphaTest:.04,depthWrite:false})
+  );
+  logo.position.set(-3.02/2+.36,-1.08/2+.13,.014);
+  panel.add(logo);
+  panel.position.set(0,.035,UD/2+.011);
+  panel.children.forEach(c=>{c.castShadow=true;c.receiveShadow=true;});
+  unitGroup.add(panel);
+}
+
+// Bottom outlet strip (fixed part above vane)
+unitGroup.add(mk(rbx(2.95,.022,.025,.005),matBlack, 0,-UH/2+.048,UD/2+.012));
+
+/* ══════════════════════════════════════════
+   LED NEON STRIP  (bottom outlet, always on)
+══════════════════════════════════════════ */
+const ledMats=[];
+const ledStrip=new THREE.Group();
+unitGroup.add(ledStrip);
+ledStrip.position.set(0,-UH/2+.048,UD/2+.016);
+[{w:2.88,h:.007,ei:4.0},{w:2.86,h:.022,ei:1.5},{w:2.82,h:.055,ei:.6}].forEach(({w,h,ei})=>{
+  const m=new THREE.MeshStandardMaterial({
+    color:0x001018,emissive:new THREE.Color(0x00B8F5),emissiveIntensity:ei,
+    transparent:true,opacity:ei>2?.9:.12,
+    blending:THREE.AdditiveBlending,depthWrite:false
+  });
+  ledStrip.add(new THREE.Mesh(new THREE.PlaneGeometry(w,h),m));
+  ledMats.push(m);
+});
+
+/* ══════════════════════════════════════════
+   VANE  –  pivots at TOP edge
+══════════════════════════════════════════ */
+const vaneGroup=new THREE.Group();
+// Pivot position: bottom of front face
+vaneGroup.position.set(0,-UH/2+.008,UD/2+.008);
+unitGroup.add(vaneGroup);
+
+// The vane mesh: pivot at y=0 (top edge), body hangs below
+const vH=.040,vD=.175;
+const vaneMesh=new THREE.Mesh(rbx(2.88,vH,vD,.010),matVane);
+vaneMesh.position.set(0,-vH/2,vD/2); // top at y=0, front at z=vD
+vaneMesh.castShadow=true;vaneMesh.receiveShadow=true;
+vaneGroup.add(vaneMesh);
+
+// Vane current and target angle (radians, 0=closed horizontal)
+let vaneAngle=0.10, vaneTgt=0.10;
+
+/* ══════════════════════════════════════════
+   AIRFLOW PARTICLES
+══════════════════════════════════════════ */
+const AIR_N=120;
+const airPos =new Float32Array(AIR_N*3);
+const airAlpha=new Float32Array(AIR_N);
+const airLife =new Float32Array(AIR_N);
+const airSpd  =new Float32Array(AIR_N);
+
+for(let i=0;i<AIR_N;i++) resetAir(i,true);
+function resetAir(i,rand){
+  // Emit from outlet (in unit-local space – apply unitGroup transform later via world pos)
+  airPos[i*3  ]=(Math.random()-.5)*2.5;     // along width
+  airPos[i*3+1]=-UH/2+.04 + unitGroup.position.y;
+  airPos[i*3+2]=UD/2+.02  + unitGroup.position.z;
+  airLife[i]=rand?Math.random()*2.0:0;
+  airSpd [i]=.022+Math.random()*.018;
+  airAlpha[i]=0;
+}
+
+const airGeo=new THREE.BufferGeometry();
+airGeo.setAttribute('position',new THREE.BufferAttribute(airPos,3));
+const airMat=new THREE.PointsMaterial({
+  color:0x88DDFF,size:.042,sizeAttenuation:true,
+  transparent:true,opacity:.0,
+  blending:THREE.AdditiveBlending,depthWrite:false,vertexColors:false
+});
+const airPoints=new THREE.Points(airGeo,airMat);
+scene.add(airPoints);
+
+// Airflow beam planes (directional glow, 3 layers)
+const beamGroup=new THREE.Group();
+scene.add(beamGroup);
+const beamMats=[];
+for(let b=0;b<3;b++){
+  const bm=new THREE.MeshBasicMaterial({
+    color:new THREE.Color(0.2,.7,1.0).lerp(new THREE.Color(1,1,1),b*.3),
+    transparent:true,opacity:0,
+    blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide
+  });
+  const bW=[2.4,1.6,.8][b], bL=[2.2,1.6,1.0][b];
+  const beam=new THREE.Mesh(new THREE.PlaneGeometry(bW,bL),bm);
+  beamGroup.add(beam);
+  beamMats.push(bm);
+}
+
+/* ══════════════════════════════════════════
+   DIAGRAM  –  side-view sketch of vane
+══════════════════════════════════════════ */
+const diagCanvas=document.getElementById('diag-canvas');
+const diagCtx=diagCanvas.getContext('2d');
+
+function drawDiagram(angle){
+  const W=110,H=110;
+  diagCtx.clearRect(0,0,W,H);
+  diagCtx.fillStyle='rgba(255,255,255,.92)';
+  diagCtx.fillRect(0,0,W,H);
+
+  // Draw unit body (rectangle side view)
+  diagCtx.strokeStyle='#222';diagCtx.lineWidth=2;
+  diagCtx.fillStyle='#1A1A22';
+  // body outline
+  diagCtx.beginPath();diagCtx.roundRect(18,14,60,50,4);diagCtx.fill();
+  diagCtx.strokeStyle='#444';diagCtx.stroke();
+
+  // outlet slot (bottom of unit)
+  diagCtx.fillStyle='#555';
+  diagCtx.fillRect(18,62,60,5);
+
+  // Pivot point (bottom front corner)
+  const px=78,py=67;
+  diagCtx.beginPath();diagCtx.arc(px,py,3,0,Math.PI*2);
+  diagCtx.fillStyle='#0092D0';diagCtx.fill();
+
+  // Vane (rotates from pivot)
+  const vLen=32;
+  const vx2=px+Math.sin(angle)*vLen;
+  const vy2=py+Math.cos(angle)*vLen;
+  diagCtx.beginPath();diagCtx.moveTo(px,py);diagCtx.lineTo(vx2,vy2);
+  diagCtx.strokeStyle='#0092D0';diagCtx.lineWidth=4;diagCtx.lineCap='round';diagCtx.stroke();
+
+  // Airflow arrow lines
+  const opacity=airMat.opacity;
+  if(opacity>.05){
+    diagCtx.strokeStyle=`rgba(0,160,255,${opacity*.6})`;
+    diagCtx.lineWidth=1.5;
+    const dir={x:Math.sin(angle),y:Math.cos(angle)};
+    for(let a=0;a<3;a++){
+      const ox=px-10+a*8;
+      const oy=py+5+a*4;
+      diagCtx.beginPath();diagCtx.moveTo(ox,oy);
+      diagCtx.lineTo(ox+dir.x*22,oy+dir.y*22);
+      // arrowhead
+      const ex=ox+dir.x*22,ey=oy+dir.y*22;
+      const perp={x:-dir.y,y:dir.x};
+      diagCtx.moveTo(ex,ey);diagCtx.lineTo(ex-dir.x*5+perp.x*4,ey-dir.y*5+perp.y*4);
+      diagCtx.moveTo(ex,ey);diagCtx.lineTo(ex-dir.x*5-perp.x*4,ey-dir.y*5-perp.y*4);
+      diagCtx.stroke();
+    }
+  }
+
+  // Label
+  diagCtx.fillStyle='#888';diagCtx.font='500 9px sans-serif';diagCtx.textAlign='center';
+  diagCtx.fillText('Daikin Stylish',55,102);
+}
+
+/* ══════════════════════════════════════════
+   STATE MACHINE
+══════════════════════════════════════════ */
+// 0=overview, 1=cooling, 2=heating, 3=auto-swing
+const STATES=['Vue d\'ensemble','En refroidissement','En chauffage','Balayage automatique'];
+const DURS=[4.5,5.0,5.0,4.0];
+const BADGES=['Vue d\'ensemble','⟶  Refroidissement','↓  Chauffage','↕  Balayage auto'];
+// Vane target angles per state (radians)
+const VANE_ANGLES=[.08, .22, 1.08, null]; // null = oscillate in animate loop
+let st=0,stT=0;
+
+const slides=['s0','s1','s2','s3'];
+function setSlide(i){
+  slides.forEach((id,k)=>{
+    const el=document.getElementById(id);
+    el.className='slide'+(k===i?' active':'');
+  });
+  document.getElementById('badge').textContent=BADGES[i];
+}
+
+/* ══════════════════════════════════════════
+   CAMERA ANIMATION
+══════════════════════════════════════════ */
+// Per-state camera targets
+const CAM=[
+  {pos:[2.8,-.5,4.0],look:[.1,.0,0]},   // overview
+  {pos:[2.2,-.9,3.6],look:[.0,-.15,0]}, // cooling – show vane from below
+  {pos:[1.8,-1.1,3.4],look:[0,-.20,0]}, // heating – more from below
+  {pos:[2.8,-.5,4.0],look:[.1,.0,0]},   // swing – wide
+];
+const camPos=new THREE.Vector3(2.8,-.5,4.0);
+const camLook=new THREE.Vector3(.1,.0,0);
+
+/* intro dolly */
+let introT=0,introDone=false;
+const introStart=new THREE.Vector3(0.2,.05,1.8);
+
+/* ══════════════════════════════════════════
+   ANIMATE
+══════════════════════════════════════════ */
+const clock=new THREE.Clock();
+function lerp(a,b,t){return a+(b-a)*t;}
+function c01(v){return Math.max(0,Math.min(1,v));}
+function eOut(t){return 1-Math.pow(1-t,3);}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),.05);
+  const et=clock.elapsedTime;
+
+  /* ── intro dolly ── */
+  if(!introDone){
+    introT+=dt;
+    const p=1-Math.pow(1-c01(introT/2.5),3);
+    camera.position.lerpVectors(introStart,CAM[0].pos,p);
+    camera.lookAt(...CAM[0].look);
+    if(p>=1)introDone=true;
+  }
+
+  /* ── state advance ── */
+  stT+=dt;
+  if(stT>DURS[st]){
+    stT=0;
+    st=(st+1)%4;
+    setSlide(st);
+  }
+  document.getElementById('prog-fill').style.width=(c01(stT/DURS[st])*100)+'%';
+
+  /* ── vane target ── */
+  if(st===3){
+    // auto-swing oscillation
+    vaneTgt=.22+Math.sin(et*1.1)*.45;
+  } else {
+    vaneTgt=VANE_ANGLES[st];
+  }
+  vaneAngle=lerp(vaneAngle,vaneTgt,dt*3.5);
+  vaneGroup.rotation.x=vaneAngle;
+
+  /* ── camera interpolation ── */
+  if(introDone){
+    const tgt=CAM[st];
+    camPos.lerp(new THREE.Vector3(...tgt.pos),dt*1.5);
+    camLook.lerp(new THREE.Vector3(...tgt.look),dt*1.5);
+    camera.position.copy(camPos);
+    camera.lookAt(camLook);
+  }
+
+  /* ── airflow activity ── */
+  const airActive=(st===1||st===2||st===3);
+  const airTargetOpa=airActive?.55:0;
+  airMat.opacity=lerp(airMat.opacity,airTargetOpa,dt*2.0);
+
+  if(airActive){
+    // Direction from vane angle (in world space, unit tilted by -0.18 y)
+    const wy=unitGroup.rotation.y;
+    const dirZ= Math.cos(vaneAngle); // forward component
+    const dirY=-Math.sin(vaneAngle); // downward component
+    // Apply unit's Y rotation
+    const dirX= Math.sin(-wy)*dirZ;
+    const dirZw= Math.cos(wy)*dirZ;
+
+    for(let i=0;i<AIR_N;i++){
+      airLife[i]+=dt;
+      const lifeMax=st===1?2.4:1.6; // cooling: longer throw
+      if(airLife[i]>lifeMax){resetAir(i,false);continue;}
+      const spd=airSpd[i]*(st===1?1.4:1.0);
+      airPos[i*3  ]+=dirX*spd;
+      airPos[i*3+1]+=dirY*spd*.8;
+      airPos[i*3+2]+=dirZw*spd;
+      // fade in/out
+      const t=airLife[i]/lifeMax;
+      airAlpha[i]=t<.15?t/.15:t>.7?(1-t)/.30:1.0;
+    }
+    airGeo.attributes.position.needsUpdate=true;
+  }
+
+  /* ── beam glow (directional airflow planes) ── */
+  {
+    const wy=unitGroup.rotation.y;
+    const outletY=unitGroup.position.y-UH/2+.05;
+    const outletZ=unitGroup.position.z+UD/2+.02;
+    const dY=-Math.sin(vaneAngle);
+    const dZ= Math.cos(vaneAngle)*Math.cos(-wy);
+    const dX= Math.cos(vaneAngle)*Math.sin(-wy);
+
+    // Beam extends from outlet in air direction
+    const beamLen=[2.0,1.4,.8];
+    beamGroup.children.forEach((b,i)=>{
+      const dist=beamLen[i]*.5;
+      b.position.set(
+        outletZ+dX*dist,
+        outletY+dY*dist*.9,
+        outletZ+dZ*dist
+      );
+      // Orient plane along airflow direction
+      b.rotation.set(vaneAngle,wy,0);
+      const opa=airActive?(.06-.015*i)*Math.abs(Math.sin(et*2.2+i)):0;
+      beamMats[i].opacity=lerp(beamMats[i].opacity,opa,dt*3);
+    });
+  }
+
+  /* ── LED strip pulse ── */
+  const pulse=.85+.15*Math.sin(et*1.4);
+  ledMats[0].emissiveIntensity=4.0*pulse;
+  ledMats[1].emissiveIntensity=1.5*pulse;
+  ledMats[2].emissiveIntensity=.6*pulse;
+
+  /* ── subtle unit float ── */
+  unitGroup.position.y=lerp(unitGroup.position.y,.10+Math.sin(et*.38)*.010,dt*2);
+
+  /* ── diagram update ── */
+  drawDiagram(vaneAngle);
+
+  renderer.render(scene,camera);
+}
+animate();
+
+/* ══════════════════════════════════════════
+   RESIZE
+══════════════════════════════════════════ */
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>

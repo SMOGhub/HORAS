@@ -4,13 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Daikin Stylish – Anatomie 3D</title>
-<script type="importmap">
-{
-  "imports": {
-    "three": "./lib/three.module.js"
-  }
-}
-</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#020204;
@@ -66,12 +59,20 @@ canvas{display:block;position:fixed;inset:0;z-index:0}
   <div id="hint">Glisser pour pivoter</div>
 </div>
 
-<script type="module">
-import * as THREE from 'three';
-import { RoundedBoxGeometry } from './lib/geometries/RoundedBoxGeometry.js';
-import { EffectComposer }    from './lib/postprocessing/EffectComposer.js';
-import { RenderPass }        from './lib/postprocessing/RenderPass.js';
-import { UnrealBloomPass }   from './lib/postprocessing/UnrealBloomPass.js';
+<!-- Classic scripts (work via file://). Order matters: deps first. -->
+<script src="three.min.js"></script>
+<script src="libjs/shaders/CopyShader.js"></script>
+<script src="libjs/shaders/LuminosityHighPassShader.js"></script>
+<script src="libjs/postprocessing/Pass.js"></script>
+<script src="libjs/postprocessing/ShaderPass.js"></script>
+<script src="libjs/postprocessing/MaskPass.js"></script>
+<script src="libjs/postprocessing/EffectComposer.js"></script>
+<script src="libjs/postprocessing/RenderPass.js"></script>
+<script src="libjs/postprocessing/UnrealBloomPass.js"></script>
+<script src="libjs/geometries/RoundedBoxGeometry.js"></script>
+<script>
+'use strict';
+const { RoundedBoxGeometry, EffectComposer, RenderPass, UnrealBloomPass } = THREE;
 
 /* ───────────────────────────────────────────────
    RENDERER

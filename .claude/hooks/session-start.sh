@@ -19,6 +19,11 @@ if ! claude mcp list 2>/dev/null | grep -q "playwright-skill"; then
     https://github.com/lackeyjb/playwright-skill/releases/download/v4.1.0/playwright-skill.tar.gz
 fi
 
+# Install graphifyy Python CLI if not present
+if ! command -v graphify &>/dev/null; then
+  pip install graphifyy
+fi
+
 # Reinstall impeccable plugin if settings exist but plugin not active
 if [ -f "$CLAUDE_PROJECT_DIR/.claude/settings.json" ]; then
   if grep -q "impeccable" "$CLAUDE_PROJECT_DIR/.claude/settings.json" 2>/dev/null; then

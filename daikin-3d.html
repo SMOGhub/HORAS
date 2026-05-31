@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daikin Stylish – Noir Mat · 3D</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#F1F0EB;
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+canvas{display:block;position:fixed;inset:0}
+
+#ui{position:fixed;inset:0;pointer-events:none;padding:36px 44px;
+    display:flex;flex-direction:column;justify-content:space-between}
+
+#brand{font-size:10px;letter-spacing:5px;text-transform:uppercase;
+       color:rgba(55,54,50,.38);font-weight:500}
+
+#footer{display:flex;justify-content:space-between;align-items:flex-end}
+
+#product{line-height:1.9}
+#product .name{font-size:12px;letter-spacing:3.5px;text-transform:uppercase;
+               color:rgba(55,54,50,.42);font-weight:500}
+#product .spec{font-size:10px;letter-spacing:2px;text-transform:uppercase;
+               color:rgba(55,54,50,.28);font-weight:400}
+
+#hint{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;
+      color:rgba(55,54,50,.25);font-weight:400}
+
+/* progress bar for intro */
+#intro-bar{position:fixed;bottom:0;left:0;height:1.5px;
+           background:rgba(55,54,50,.12);
+           transition:width 2.4s cubic-bezier(.4,0,.2,1);width:0}
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div id="brand">Daikin</div>
+  <div id="footer">
+    <div id="product">
+      <div class="name">Stylish · Édition Noire</div>
+      <div class="spec">R-32 · Inverter · Climatiseur mural</div>
+    </div>
+    <div id="hint">Glisser pour pivoter</div>
+  </div>
+</div>
+
+<div id="intro-bar"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════
+   RENDERER
+═══════════════════════════════════════════════════════ */
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.86;
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.insertBefore(renderer.domElement, document.getElementById('ui'));
+
+/* ═══════════════════════════════════════════════════════
+   SCENE & CAMERA
+═══════════════════════════════════════════════════════ */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xF1F0EB);
+
+const camera = new THREE.PerspectiveCamera(24, innerWidth / innerHeight, 0.01, 80);
+camera.position.set(3.4, 1.6, 5.6);
+camera.lookAt(0, 0, 0);
+
+/* ═══════════════════════════════════════════════════════
+   LIGHTS  –  studio soft-box setup
+═══════════════════════════════════════════════════════ */
+
+// Ambient – warm fill
+const al = new THREE.AmbientLight(0xFAF8F2, 0.30);
+scene.add(al);
+
+// Key – large soft-box upper-left-front
+const kl = new THREE.DirectionalLight(0xFFFFFB, 1.72);
+kl.position.set(-5, 8, 4.5);
+kl.castShadow = true;
+kl.shadow.mapSize.width  = 2048;
+kl.shadow.mapSize.height = 2048;
+kl.shadow.camera.near   = 1;
+kl.shadow.camera.far    = 28;
+kl.shadow.camera.left   = -8;
+kl.shadow.camera.right  =  8;
+kl.shadow.camera.top    =  8;
+kl.shadow.camera.bottom = -8;
+kl.shadow.bias   = -0.00045;
+kl.shadow.radius = 11;   // soft shadow penumbra
+scene.add(kl);
+
+// Fill – right-side
+const fl = new THREE.DirectionalLight(0xECF3FF, 0.44);
+fl.position.set(6, 1.5, 1);
+scene.add(fl);
+
+// Rim – behind / above  (highlights top edge against background)
+const rl = new THREE.DirectionalLight(0xE4EEFF, 0.58);
+rl.position.set(0.5, 6, -6);
+scene.add(rl);
+
+// Bounce – warm, from below
+const bl = new THREE.DirectionalLight(0xFFF4E4, 0.10);
+bl.position.set(0, -6, 3);
+scene.add(bl);
+
+/* ═══════════════════════════════════════════════════════
+   UNIT DIMENSIONS
+   Real: 795 × 295 × 225 mm
+   1 model unit = 265 mm  →  scale = 3 / 7.95
+═══════════════════════════════════════════════════════ */
+const UW = 3.00;               // width  795 mm
+const UH = 3.00 * 295 / 795;  // height 295 mm  ≈ 1.113
+const UD = 3.00 * 225 / 795;  // depth  225 mm  ≈ 0.849
+
+/* ═══════════════════════════════════════════════════════
+   MATERIALS
+═══════════════════════════════════════════════════════ */
+// Main body – near-black with subtle specularity
+const matBody = new THREE.MeshStandardMaterial({
+  color:     0x1A1A1F,
+  roughness: 0.875,
+  metalness: 0.125
+});
+
+// Front panel – marginally different shade (recessed look)
+const matPanel = new THREE.MeshStandardMaterial({
+  color:     0x1D1D23,
+  roughness: 0.840,
+  metalness: 0.160
+});
+
+// Deep voids – air gaps, grooves, vents
+const matVoid = new THREE.MeshStandardMaterial({
+  color:     0x07070A,
+  roughness: 0.990,
+  metalness: 0.010
+});
+
+// Ribs – darkest element
+const matRib = new THREE.MeshStandardMaterial({
+  color:     0x111115,
+  roughness: 0.930,
+  metalness: 0.070
+});
+
+// Subtle raised elements
+const matSubtle = new THREE.MeshStandardMaterial({
+  color:     0x21212A,
+  roughness: 0.810,
+  metalness: 0.190
+});
+
+// LED indicator – emissive dot
+const matLED = new THREE.MeshStandardMaterial({
+  color:     0x1A2A20,
+  emissive:  new THREE.Color(0x00FF88),
+  emissiveIntensity: 0.0, // starts off, pulsed in animate()
+  roughness: 0.4,
+  metalness: 0.2
+});
+
+/* ═══════════════════════════════════════════════════════
+   GEOMETRY ASSEMBLY
+═══════════════════════════════════════════════════════ */
+const g = new THREE.Group();
+scene.add(g);
+
+// helper
+function addBox(w, h, d, mat, px, py, pz, shadow=true) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(px, py, pz);
+  if (shadow) { m.castShadow = true; m.receiveShadow = true; }
+  g.add(m);
+  return m;
+}
+
+// ─── 1. MAIN BODY ─────────────────────────────────────
+addBox(UW, UH, UD, matBody, 0, 0, 0);
+
+// ─── 2. FRONT MAIN PANEL ──────────────────────────────
+// Slightly different shade covers 82% of front-face height
+// (gap at top = lid separator, gap at bottom = air outlet)
+addBox(UW * 0.9970, UH * 0.820, 0.006, matPanel,
+       0, -UH * 0.045, UD / 2 + 0.003);
+
+// ─── 3. TOP LID SEPARATOR GROOVE ──────────────────────
+// Thin dark horizontal line near top of front face
+// (where the top lid would open)
+addBox(UW * 0.9975, 0.018, 0.007, matVoid,
+       0, UH / 2 - 0.078, UD / 2 + 0.004);
+
+// ─── 4. AIR OUTLET SLIT ───────────────────────────────
+// Characteristic narrow gap at the very bottom front
+// (air flows out here when operating)
+addBox(UW * 0.967, 0.024, 0.008, matVoid,
+       0, -UH / 2 + 0.046, UD / 2 + 0.004);
+
+// Inner outlet shadow (depth illusion)
+addBox(UW * 0.965, 0.018, 0.020, matVoid,
+       0, -UH / 2 + 0.062, UD / 2 + 0.000);
+
+// ─── 5. TOP-FRONT EDGE DETAIL ─────────────────────────
+// Thin raised strip at junction of top and front face
+addBox(UW * 0.999, 0.006, 0.016, matSubtle,
+       0, UH / 2, UD / 2 - 0.008);
+
+// ─── 6. RIGHT CORNER RIBBED STRIP ─────────────────────
+// Most distinctive visual feature: 15 thin vertical ribs
+// form a textured strip at the right-front corner
+{
+  const N     = 15;
+  const ribW  = 0.0075;   // ~2 mm
+  const ribH  = UH * 0.970;
+  const ribD  = 0.042;    // ~11 mm  (visible from front & side)
+  const step  = 0.0130;   // ~3.4 mm pitch
+  const bandW = (N - 1) * step;
+  // Right edge is at UW/2 = 1.5; ribs start ~6cm from right edge
+  const startX = UW / 2 - 0.025 - bandW;
+
+  for (let i = 0; i < N; i++) {
+    const rib = new THREE.Mesh(
+      new THREE.BoxGeometry(ribW, ribH, ribD),
+      matRib
+    );
+    rib.position.set(startX + i * step, 0, UD / 2 - ribD / 2 + 0.002);
+    rib.castShadow = true;
+    g.add(rib);
+  }
+}
+
+// ─── 7. RIGHT SIDE FACE – VENTILATION SLOTS ───────────
+// 3 small horizontal louvers on the right end face
+for (let i = 0; i < 3; i++) {
+  addBox(0.004, 0.010, 0.040, matVoid,
+         UW / 2 + 0.002,
+         UH / 2 - 0.220 - i * 0.024,
+         0.025);
+}
+
+// ─── 8. RIGHT SIDE FACE – CONTROL BUTTONS ─────────────
+// 4 small tactile buttons in a vertical cluster
+for (let i = 0; i < 4; i++) {
+  addBox(0.004, 0.020, 0.020, matSubtle,
+         UW / 2 + 0.002,
+         UH / 2 - 0.165 - i * 0.030,
+         0.040);
+}
+
+// ─── 9. LED INDICATOR ─────────────────────────────────
+// Tiny round indicator light on the front face
+{
+  const ledGeo = new THREE.CircleGeometry(0.009, 16);
+  const led = new THREE.Mesh(ledGeo, matLED);
+  led.position.set(UW / 2 - 0.26, -UH / 2 + 0.21, UD / 2 + 0.012);
+  g.add(led);
+}
+
+// ─── 10. DAIKIN LOGO ──────────────────────────────────
+{
+  const lc = document.createElement('canvas');
+  lc.width = 480; lc.height = 76;
+  const lx = lc.getContext('2d');
+  lx.clearRect(0, 0, 480, 76);
+
+  // Daikin chevron / triangle mark
+  lx.fillStyle = 'rgba(122, 122, 138, 0.88)';
+  lx.beginPath();
+  lx.moveTo(10, 55); lx.lineTo(27, 28); lx.lineTo(44, 55);
+  lx.closePath();
+  lx.fill();
+
+  // DAIKIN logotype
+  lx.font = '600 32px "Helvetica Neue", Helvetica, Arial';
+  lx.fillStyle = 'rgba(122, 122, 138, 0.88)';
+  lx.fillText('DAIKIN', 52, 52);
+
+  const lTex = new THREE.CanvasTexture(lc);
+  const logo = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.580, 0.092),
+    new THREE.MeshBasicMaterial({
+      map: lTex, transparent: true, alphaTest: 0.04, depthWrite: false
+    })
+  );
+  logo.position.set(-UW / 2 + 0.395, -UH / 2 + 0.165, UD / 2 + 0.015);
+  g.add(logo);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ENVIRONMENT – wall & subtle ground shadow
+═══════════════════════════════════════════════════════ */
+
+// Wall behind the unit (unit is wall-mounted)
+const wallMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(22, 14),
+  new THREE.MeshStandardMaterial({ color: 0xEAE9E4, roughness: 0.96, metalness: 0 })
+);
+wallMesh.position.set(0, 0.3, -UD / 2 - 1.6);
+wallMesh.receiveShadow = true;
+scene.add(wallMesh);
+
+// Very subtle floor plane (barely visible, just for grounding)
+const floorMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(22, 14),
+  new THREE.MeshStandardMaterial({ color: 0xE8E7E2, roughness: 0.97, metalness: 0 })
+);
+floorMesh.rotation.x = -Math.PI / 2;
+floorMesh.position.y = -UH / 2 - 1.4;
+floorMesh.receiveShadow = true;
+scene.add(floorMesh);
+
+/* ═══════════════════════════════════════════════════════
+   INTERACTION  –  mouse & touch orbit
+═══════════════════════════════════════════════════════ */
+let dragging = false, lx = 0, ly = 0;
+let velY = 0, velX = 0;
+let curRotY = 0, curRotX = 0.032;
+let autoMode = true, autoT = 0;
+let resumeTimer = null;
+
+function startDrag(x, y) {
+  dragging = true;
+  lx = x; ly = y;
+  autoMode = false;
+  clearTimeout(resumeTimer);
+}
+function endDrag() {
+  dragging = false;
+  resumeTimer = setTimeout(() => {
+    autoMode = true;
+    // sync autoT to current rotation so no jump
+    autoT = curRotY / 0.25;
+  }, 3800);
+}
+function moveDrag(x, y) {
+  if (!dragging) return;
+  velY += (x - lx) * 0.0068;
+  velX += (y - ly) * 0.0038;
+  lx = x; ly = y;
+}
+
+const cvs = renderer.domElement;
+cvs.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY));
+addEventListener('mouseup', endDrag);
+addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+cvs.addEventListener('touchstart', e => {
+  startDrag(e.touches[0].clientX, e.touches[0].clientY);
+  e.preventDefault();
+}, { passive: false });
+addEventListener('touchend', endDrag);
+addEventListener('touchmove', e => moveDrag(e.touches[0].clientX, e.touches[0].clientY),
+  { passive: true });
+
+/* ═══════════════════════════════════════════════════════
+   INTRO CAMERA ANIMATION
+═══════════════════════════════════════════════════════ */
+const camStart = new THREE.Vector3(5.5, 2.4, 9.0);
+const camEnd   = new THREE.Vector3(3.4, 1.6, 5.6);
+let introT = 0;
+const introDur = 2.4;
+let introComplete = false;
+
+// kick off progress bar
+requestAnimationFrame(() => {
+  document.getElementById('intro-bar').style.width = '100%';
+});
+setTimeout(() => {
+  document.getElementById('intro-bar').style.opacity = '0';
+}, 2600);
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+/* ═══════════════════════════════════════════════════════
+   ANIMATION LOOP
+═══════════════════════════════════════════════════════ */
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+
+  // ── intro camera zoom ──
+  if (!introComplete) {
+    introT += dt;
+    const p = easeOutCubic(Math.min(1, introT / introDur));
+    camera.position.lerpVectors(camStart, camEnd, p);
+    camera.lookAt(0, 0, 0);
+    if (p >= 1) introComplete = true;
+  }
+
+  // ── rotation ──
+  if (autoMode) {
+    autoT += dt;
+    curRotY = autoT * 0.25;                        // ~25 s / revolution
+    curRotX = Math.sin(autoT * 0.30) * 0.036;      // gentle nod
+    g.position.y = Math.sin(autoT * 0.44) * 0.028; // float
+  } else {
+    curRotY += velY;
+    curRotX += velX;
+    curRotX  = Math.max(-0.34, Math.min(0.34, curRotX));
+    velY *= 0.91;
+    velX *= 0.91;
+    g.position.y = 0;
+  }
+
+  g.rotation.y = curRotY;
+  g.rotation.x = curRotX;
+
+  // ── LED pulse ──
+  matLED.emissiveIntensity = 0.55 + 0.45 * Math.sin(clock.elapsedTime * 1.8);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* ═══════════════════════════════════════════════════════
+   RESIZE
+═══════════════════════════════════════════════════════ */
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

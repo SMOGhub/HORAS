@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daikin Stylish – Anatomie 3D</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#040407;
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+canvas{display:block;position:fixed;inset:0;z-index:0}
+#ui{position:fixed;inset:0;z-index:1;pointer-events:none}
+#brand{position:absolute;top:36px;left:44px;font:500 9px/1 sans-serif;
+  letter-spacing:5px;text-transform:uppercase;color:rgba(255,255,255,.20)}
+#tagline{position:absolute;top:36px;right:44px;text-align:right;font:400 8px/1 sans-serif;
+  letter-spacing:3px;text-transform:uppercase;color:rgba(0,200,255,.28)}
+#phase{position:absolute;bottom:44px;left:50%;transform:translateX(-50%);
+  font:400 8px/1 sans-serif;letter-spacing:5px;text-transform:uppercase;
+  color:rgba(0,200,255,.38);white-space:nowrap}
+#bar{position:absolute;bottom:30px;left:80px;right:80px;height:1px;background:rgba(0,150,255,.10)}
+#bar-fill{height:100%;background:linear-gradient(90deg,transparent,rgba(0,200,255,.45),transparent);width:0}
+#hint{position:absolute;bottom:44px;right:44px;font:400 8px/1 sans-serif;
+  letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.12)}
+</style>
+</head>
+<body>
+<div id="ui">
+  <div id="brand">Daikin</div>
+  <div id="tagline">Stylish · R-32 · Inverter</div>
+  <div id="phase">Vue d'ensemble</div>
+  <div id="bar"><div id="bar-fill"></div></div>
+  <div id="hint">Glisser pour pivoter</div>
+</div>
+<script src="three.min.js"></script>
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════
+   RENDERER
+═══════════════════════════════════════════════ */
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.insertBefore(renderer.domElement, document.getElementById('ui'));
+
+/* ═══════════════════════════════════════════════
+   SCENE & CAMERA
+═══════════════════════════════════════════════ */
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(26, innerWidth/innerHeight, 0.01, 120);
+camera.position.set(4.2, 1.8, 6.0);
+camera.lookAt(0,0,0);
+
+// Atmospheric gradient bg sphere
+{
+  const c=document.createElement('canvas'); c.width=2; c.height=512;
+  const cx=c.getContext('2d');
+  const g=cx.createLinearGradient(0,0,0,512);
+  g.addColorStop(0,'#080812'); g.addColorStop(0.5,'#040408'); g.addColorStop(1,'#020204');
+  cx.fillStyle=g; cx.fillRect(0,0,2,512);
+  scene.add(new THREE.Mesh(
+    new THREE.SphereGeometry(70,24,12),
+    new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),side:THREE.BackSide})
+  ));
+}
+
+/* ═══════════════════════════════════════════════
+   LIGHTS
+═══════════════════════════════════════════════ */
+// Tiny ambient – almost nothing
+scene.add(new THREE.AmbientLight(0x050510, 1.0));
+
+// Key – warm white, upper-left-front
+const kl = new THREE.DirectionalLight(0xFFFFF8, 2.2);
+kl.position.set(-5, 9, 4);
+kl.castShadow = true;
+kl.shadow.mapSize.set(1024,1024);
+Object.assign(kl.shadow.camera,{near:1,far:22,left:-7,right:7,top:7,bottom:-7});
+kl.shadow.bias=-0.0005; kl.shadow.radius=10;
+scene.add(kl);
+
+// Rim – nearly white from behind, creates edge separation
+const rl = new THREE.DirectionalLight(0xEEF0FF, 0.70);
+rl.position.set(1,5,-7); scene.add(rl);
+
+// Fill – very subtle from right
+const fl = new THREE.DirectionalLight(0xCCCCDD, 0.18);
+fl.position.set(8,1,2); scene.add(fl);
+
+// Neon accents – animated, start at 0
+const nA = new THREE.PointLight(0x00CCFF, 0.0, 6.0); scene.add(nA);
+const nB = new THREE.PointLight(0x0055FF, 0.0, 4.5);
+nB.position.set(0.3,0.1,0.2); scene.add(nB);
+const nC = new THREE.PointLight(0x00AAFF, 0.0, 8.0); scene.add(nC);
+
+/* ═══════════════════════════════════════════════
+   PARTICLES  –  bokeh atmosphere
+═══════════════════════════════════════════════ */
+{
+  const N=700, pos=new Float32Array(N*3), col=new Float32Array(N*3);
+  const c1=new THREE.Color(0x3366FF), c2=new THREE.Color(0xCCCCFF);
+  for(let i=0;i<N;i++){
+    pos[i*3]=(Math.random()-.5)*55; pos[i*3+1]=(Math.random()-.5)*32; pos[i*3+2]=(Math.random()-.5)*40-5;
+    const c=Math.random()<0.45?c1:c2;
+    col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({
+    size:0.017,sizeAttenuation:true,vertexColors:true,
+    transparent:true,opacity:0.30,blending:THREE.AdditiveBlending,depthWrite:false
+  })));
+}
+
+/* ═══════════════════════════════════════════════
+   UNIT DIMS  795×295×225 mm → scale 3.0/1.113/0.849
+═══════════════════════════════════════════════ */
+const UW=3.0, UH=3.0*295/795, UD=3.0*225/795;
+
+/* ═══════════════════════════════════════════════
+   MATERIALS  – all very dark, key light reveals form
+═══════════════════════════════════════════════ */
+const M={
+  body:     new THREE.MeshStandardMaterial({color:0x111116,roughness:0.88,metalness:0.12}),
+  front:    new THREE.MeshStandardMaterial({color:0x161620,roughness:0.83,metalness:0.17}),
+  inner:    new THREE.MeshStandardMaterial({color:0xBEC4D0,roughness:0.72,metalness:0.05}),
+  metal:    new THREE.MeshStandardMaterial({color:0x222C3C,roughness:0.22,metalness:0.92}),
+  alu:      new THREE.MeshStandardMaterial({color:0x283240,roughness:0.16,metalness:0.96}),
+  finSep:   new THREE.MeshStandardMaterial({color:0x111820,roughness:0.3,metalness:0.9}),
+  pcb:      new THREE.MeshStandardMaterial({color:0x061408,roughness:0.65,metalness:0.08,
+              emissive:new THREE.Color(0x001A06),emissiveIntensity:0.7}),
+  fan:      new THREE.MeshStandardMaterial({color:0x141418,roughness:0.84,metalness:0.16}),
+  drain:    new THREE.MeshStandardMaterial({color:0xC8CDD8,roughness:0.70,metalness:0.0}),
+  vane:     new THREE.MeshStandardMaterial({color:0x0C0C10,roughness:0.92,metalness:0.08}),
+  filter:   new THREE.MeshStandardMaterial({color:0x141418,roughness:0.90,metalness:0.0,
+              transparent:true,opacity:0.80}),
+  void:     new THREE.MeshStandardMaterial({color:0x030305,roughness:1.0,metalness:0.0}),
+  neonLine: new THREE.MeshStandardMaterial({color:0x003355,roughness:0.4,metalness:0.2,
+              emissive:new THREE.Color(0x00AAFF),emissiveIntensity:2.8}),
+};
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+function clamp01(v){return Math.max(0,Math.min(1,v));}
+function easeIO(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+function easeOut(t){return 1-Math.pow(1-t,3);}
+function easeIn(t){return t*t*t;}
+function lerp(a,b,t){return a+(b-a)*t;}
+
+function mkEdge(geo,col){
+  const l=new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({color:col,transparent:true,opacity:0,
+      blending:THREE.AdditiveBlending,depthWrite:false})
+  );
+  return l;
+}
+
+function mkLabel(title,sub){
+  const W=330,H=76;
+  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const cx=c.getContext('2d');
+  cx.clearRect(0,0,W,H);
+  cx.fillStyle='rgba(2,6,16,0.90)'; cx.fillRect(3,3,W-6,H-6);
+  cx.strokeStyle='rgba(0,185,255,0.40)'; cx.lineWidth=1; cx.strokeRect(3,3,W-6,H-6);
+  cx.fillStyle='rgba(0,195,255,0.85)'; cx.fillRect(3,3,3,H-6);
+  cx.fillStyle='rgba(215,235,255,0.95)'; cx.font='600 15px "Helvetica Neue",Arial';
+  cx.fillText(title,14,27);
+  cx.fillStyle='rgba(0,175,255,0.70)'; cx.font='400 11px "Helvetica Neue",Arial';
+  cx.fillText(sub,14,47);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({
+    map:new THREE.CanvasTexture(c),transparent:true,opacity:0.0,depthWrite:false
+  }));
+  sp.scale.set(1.45,0.33,1);
+  return sp;
+}
+
+/* ═══════════════════════════════════════════════
+   COMPONENT SYSTEM
+═══════════════════════════════════════════════ */
+const unitGroup = new THREE.Group();
+scene.add(unitGroup);
+const COMPS=[];
+
+/**
+ * meshDefs: array of {geo, mat, px,py,pz, rx,ry,rz, edges:bool}
+ * primaryIdx: which mesh gets edge glow (default 0)
+ */
+function addComp({meshDefs, asmPos, explodeVec, delay, lt, ls, labelOff, edgeCol}){
+  const grp=new THREE.Group();
+  grp.position.copy(asmPos);
+  const edgeMats=[];
+
+  meshDefs.forEach((def,idx)=>{
+    const {geo,mat,px=0,py=0,pz=0,rx=0,ry=0,rz=0,noEdge=false}=def;
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set(px,py,pz);
+    m.rotation.set(rx,ry,rz);
+    m.castShadow=true; m.receiveShadow=true;
+    grp.add(m);
+
+    if(!noEdge){
+      const el=mkEdge(geo,edgeCol||0x00CCFF);
+      el.position.set(px,py,pz);
+      el.rotation.set(rx,ry,rz);
+      grp.add(el);
+      edgeMats.push(el.material);
+      // Bloom layer
+      const bm=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({
+        color:edgeCol||0x003344,transparent:true,opacity:0,
+        blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.BackSide
+      }));
+      bm.position.set(px,py,pz); bm.rotation.set(rx,ry,rz);
+      bm.scale.setScalar(1.04);
+      grp.add(bm);
+      edgeMats.push({bloom:true,mat:bm.material});
+    }
+  });
+
+  const lbl=mkLabel(lt,ls);
+  if(labelOff) lbl.position.copy(labelOff); else lbl.position.y=0.30;
+  grp.add(lbl);
+  unitGroup.add(grp);
+
+  COMPS.push({grp,edgeMats,labelMat:lbl.material,
+    asmPos:asmPos.clone(),explodeVec:explodeVec.clone(),delay});
+}
+
+/* ═══════════════════════════════════════════════
+   BUILD THE 10 COMPONENTS
+═══════════════════════════════════════════════ */
+
+/* 1 · Platine de fixation */
+addComp({
+  meshDefs:[
+    {geo:new THREE.BoxGeometry(3.18,1.22,0.042), mat:M.metal},
+    {geo:new THREE.CylinderGeometry(.028,.028,.045,12),mat:M.void,px:-1.2,py:.46,rz:Math.PI/2,noEdge:true},
+    {geo:new THREE.CylinderGeometry(.028,.028,.045,12),mat:M.void,px: 1.2,py:.46,rz:Math.PI/2,noEdge:true},
+    {geo:new THREE.CylinderGeometry(.028,.028,.045,12),mat:M.void,px:-1.2,py:-.46,rz:Math.PI/2,noEdge:true},
+    {geo:new THREE.CylinderGeometry(.028,.028,.045,12),mat:M.void,px: 1.2,py:-.46,rz:Math.PI/2,noEdge:true},
+  ],
+  asmPos:new THREE.Vector3(0,0,-UD/2-.02),
+  explodeVec:new THREE.Vector3(0,0,-3.0),
+  delay:0.0, edgeCol:0x0088FF,
+  lt:'Platine de fixation', ls:'Acier galvanisé · 2 mm',
+  labelOff:new THREE.Vector3(-.6,-.7,0)
+});
+
+/* 2 · Carrosserie arrière */
+addComp({
+  meshDefs:[{geo:new THREE.BoxGeometry(2.96,1.06,.72),mat:M.inner}],
+  asmPos:new THREE.Vector3(0,0,-.06),
+  explodeVec:new THREE.Vector3(0,0,-1.2),
+  delay:0.06, edgeCol:0x3399FF,
+  lt:'Carrosserie arrière', ls:'ABS recyclé · Blanc ivoire',
+  labelOff:new THREE.Vector3(1.1,.6,0)
+});
+
+/* 3 · Échangeur thermique */
+{
+  const fins=[];
+  for(let i=0;i<14;i++) fins.push({
+    geo:new THREE.BoxGeometry(2.52,.004,.125),mat:M.finSep,
+    py:-.28+i*.044, noEdge:true
+  });
+  addComp({
+    meshDefs:[{geo:new THREE.BoxGeometry(2.55,.60,.12),mat:M.alu}, ...fins],
+    asmPos:new THREE.Vector3(0,.18,-.15),
+    explodeVec:new THREE.Vector3(.3,1.5,-1.2),
+    delay:0.13, edgeCol:0x00EEFF,
+    lt:'Échangeur thermique', ls:'Aluminium / tube cuivre · R-32',
+    labelOff:new THREE.Vector3(.9,.55,0)
+  });
+}
+
+/* 4 · Turbine centrifuge */
+addComp({
+  meshDefs:[{geo:new THREE.CylinderGeometry(.115,.115,2.72,22),mat:M.fan,rz:Math.PI/2}],
+  asmPos:new THREE.Vector3(0,-.03,.08),
+  explodeVec:new THREE.Vector3(0,1.1,.2),
+  delay:0.22, edgeCol:0x55CCFF,
+  lt:'Turbine centrifuge', ls:'Ø 90 mm · PP soufflé',
+  labelOff:new THREE.Vector3(-1.2,.55,0)
+});
+
+/* 5 · Bac à condensats */
+addComp({
+  meshDefs:[
+    {geo:new THREE.BoxGeometry(2.72,.07,.66),mat:M.drain},
+    {geo:new THREE.CylinderGeometry(.018,.018,.08,10),mat:M.void,px:-1.1,noEdge:true},
+  ],
+  asmPos:new THREE.Vector3(0,-UH/2+.035,.02),
+  explodeVec:new THREE.Vector3(0,-.90,0),
+  delay:0.32, edgeCol:0x0077FF,
+  lt:'Bac à condensats', ls:'PS · Anti-corrosion',
+  labelOff:new THREE.Vector3(.8,-.42,0)
+});
+
+/* 6 · Carte électronique */
+addComp({
+  meshDefs:[
+    {geo:new THREE.BoxGeometry(.40,.30,.018),mat:M.pcb},
+    {geo:new THREE.BoxGeometry(.065,.065,.025),mat:new THREE.MeshStandardMaterial({color:0x0A0A0A,roughness:.4,metalness:.6}),px:-.10,py:.06,pz:.018,noEdge:true},
+    {geo:new THREE.BoxGeometry(.085,.028,.018),mat:new THREE.MeshStandardMaterial({color:0x1A1A1A,roughness:.4,metalness:.7}),px:.09,py:.08,pz:.018,noEdge:true},
+    {geo:new THREE.BoxGeometry(.030,.030,.015),mat:new THREE.MeshStandardMaterial({color:0x001A10,roughness:.3,metalness:.1,emissive:new THREE.Color(0x004422),emissiveIntensity:.9}),px:-.10,py:-.07,pz:.018,noEdge:true},
+  ],
+  asmPos:new THREE.Vector3(UW/2-.26,.08,0),
+  explodeVec:new THREE.Vector3(1.85,.25,0),
+  delay:0.42, edgeCol:0x00FF88,
+  lt:'Carte électronique', ls:'Wifi · Capteurs · IA Daikin',
+  labelOff:new THREE.Vector3(.35,.40,0)
+});
+
+/* 7 · Filtre à air */
+{
+  const grid=[];
+  for(let i=0;i<12;i++) grid.push({
+    geo:new THREE.BoxGeometry(2.48,.002,.009),mat:new THREE.MeshStandardMaterial({color:0x1E1E26,roughness:.9}),
+    py:-.38+i*.070, noEdge:true
+  });
+  addComp({
+    meshDefs:[{geo:new THREE.BoxGeometry(2.50,.82,.009),mat:M.filter}, ...grid],
+    asmPos:new THREE.Vector3(0,.01,UD/2-.10),
+    explodeVec:new THREE.Vector3(-.3,.55,1.1),
+    delay:0.52, edgeCol:0x88DDFF,
+    lt:'Filtre à air', ls:'Maille PP · Lavable',
+    labelOff:new THREE.Vector3(-.9,.5,0)
+  });
+}
+
+/* 8 · Panneau avant  (the hero piece) */
+{
+  const ribs=[];
+  for(let i=0;i<14;i++) ribs.push({
+    geo:new THREE.BoxGeometry(.007,1.04,.036),
+    mat:new THREE.MeshStandardMaterial({color:0x0C0C10,roughness:.93}),
+    px:3.02/2-.025-i*.013, pz:-.004, noEdge:true
+  });
+
+  // DAIKIN logo canvas texture
+  const lc=document.createElement('canvas'); lc.width=400; lc.height=64;
+  const lx=lc.getContext('2d'); lx.clearRect(0,0,400,64);
+  lx.fillStyle='rgba(108,108,128,0.88)';
+  lx.beginPath(); lx.moveTo(8,50); lx.lineTo(22,26); lx.lineTo(36,50); lx.closePath(); lx.fill();
+  lx.font='600 28px "Helvetica Neue",Arial'; lx.fillStyle='rgba(108,108,128,0.88)';
+  lx.fillText('DAIKIN',44,48);
+  const logoMesh=new THREE.Mesh(
+    new THREE.PlaneGeometry(.55,.087),
+    new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(lc),transparent:true,alphaTest:.04,depthWrite:false})
+  );
+  logoMesh.position.set(-3.02/2+.37,-1.08/2+.14,.014);
+
+  addComp({
+    meshDefs:[
+      {geo:new THREE.BoxGeometry(3.02,1.08,.022),mat:M.front},
+      {geo:new THREE.BoxGeometry(3.01,.016,.025),mat:M.void,py:UH/2-.076,pz:.012,noEdge:true},
+      {geo:new THREE.BoxGeometry(2.96,.022,.024),mat:M.void,py:-UH/2+.048,pz:.012,noEdge:true},
+      ...ribs
+    ],
+    asmPos:new THREE.Vector3(0,.035,UD/2+.011),
+    explodeVec:new THREE.Vector3(0,0,2.5),
+    delay:0.60, edgeCol:0x00BBFF,
+    lt:'Panneau avant Stylish', ls:'ABS mat · Noir profond',
+    labelOff:new THREE.Vector3(-.5,.7,0)
+  });
+  // Add logo to front panel group (last comp)
+  COMPS[COMPS.length-1].grp.add(logoMesh);
+}
+
+/* 9 · Volet de distribution d'air */
+addComp({
+  meshDefs:[{geo:new THREE.BoxGeometry(2.88,.032,.15),mat:M.vane}],
+  asmPos:new THREE.Vector3(0,-UH/2+.008,UD/2+.005),
+  explodeVec:new THREE.Vector3(0,-.75,1.5),
+  delay:0.70, edgeCol:0x00AAFF,
+  lt:'Volet de distribution', ls:'5 axes · Mode silencieux',
+  labelOff:new THREE.Vector3(.5,-.45,0)
+});
+
+/* 10 · Couvercle supérieur */
+addComp({
+  meshDefs:[{geo:new THREE.BoxGeometry(3.03,.052,UD+.012),mat:M.body}],
+  asmPos:new THREE.Vector3(0,UH/2-.024,0),
+  explodeVec:new THREE.Vector3(0,.95,0),
+  delay:0.78, edgeCol:0x00AAFF,
+  lt:'Couvercle supérieur', ls:'ABS mat · Finition soft-touch',
+  labelOff:new THREE.Vector3(.5,.38,0)
+});
+
+/* ═══════════════════════════════════════════════
+   NEON LED STRIP  –  air outlet (like car LED strips)
+═══════════════════════════════════════════════ */
+const neonStrip=new THREE.Group();
+unitGroup.add(neonStrip);
+neonStrip.position.set(0,-UH/2+.048,UD/2+.015);
+const stripLayers=[
+  {w:2.88,h:.009,opa:1.0}, {w:2.88,h:.028,opa:.22}, {w:2.88,h:.072,opa:.07}
+];
+const stripMats=[];
+stripLayers.forEach(({w,h,opa})=>{
+  const mat=new THREE.MeshBasicMaterial({color:0x00CCFF,transparent:true,opacity:opa,
+    blending:THREE.AdditiveBlending,depthWrite:false});
+  neonStrip.add(new THREE.Mesh(new THREE.BoxGeometry(w,h,.002),mat));
+  stripMats.push(mat);
+});
+
+/* ═══════════════════════════════════════════════
+   FLOOR (very dark)
+═══════════════════════════════════════════════ */
+const fMesh=new THREE.Mesh(
+  new THREE.PlaneGeometry(30,30),
+  new THREE.MeshStandardMaterial({color:0x04040A,roughness:.98,metalness:0})
+);
+fMesh.rotation.x=-Math.PI/2;
+fMesh.position.y=-UH/2-1.0;
+fMesh.receiveShadow=true;
+scene.add(fMesh);
+
+/* ═══════════════════════════════════════════════
+   INTERACTION
+═══════════════════════════════════════════════ */
+let drag=false,lx=0,ly=0,velY=0,velX=0;
+let manY=0.4,manX=0.05,autoOrbit=true,autoT=0;
+function dStart(x,y){drag=true;lx=x;ly=y;autoOrbit=false;clearTimeout(dStart._t);}
+function dEnd(){drag=false;dStart._t=setTimeout(()=>{autoOrbit=true;autoT=manY/.22;},5000);}
+function dMove(x,y){if(!drag)return;velY+=(x-lx)*.007;velX+=(y-ly)*.004;lx=x;ly=y;}
+const cvs=renderer.domElement;
+cvs.addEventListener('mousedown',e=>dStart(e.clientX,e.clientY));
+addEventListener('mouseup',dEnd);
+addEventListener('mousemove',e=>dMove(e.clientX,e.clientY));
+cvs.addEventListener('touchstart',e=>{dStart(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+addEventListener('touchend',dEnd);
+addEventListener('touchmove',e=>dMove(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+
+/* ═══════════════════════════════════════════════
+   STATE MACHINE
+═══════════════════════════════════════════════ */
+const STATES=['Vue d\'ensemble','Décomposition','Vue éclatée','Assemblage','Vue finale'];
+const DURS  =[          6.0,          5.5,          7.5,          5.0,        5.0];
+// Corresponding globalExplodeP behaviour per state:
+// 0=SHOW: 0   1=EXPLODING: 0→1   2=ORBIT: 1   3=IMPLODING: 1→0   4=HERO: 0
+let st=0, stT=0;
+document.getElementById('phase').textContent=STATES[0];
+
+const camR={radius:6.0,phi:.28};
+
+/* ═══════════════════════════════════════════════
+   INTRO CAMERA  (first 2.5s)
+═══════════════════════════════════════════════ */
+const introStart=new THREE.Vector3(0.0,0.05,1.6);
+const introEnd  =new THREE.Vector3(4.2,1.8,6.0);
+let introT=0, introDone=false;
+function easeOut3(t){return 1-Math.pow(1-t,3);}
+
+/* ═══════════════════════════════════════════════
+   ANIMATION LOOP
+═══════════════════════════════════════════════ */
+const clock=new THREE.Clock();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),.05);
+  const et=clock.elapsedTime;
+
+  /* intro cam */
+  if(!introDone){
+    introT+=dt;
+    const p=easeOut3(clamp01(introT/2.5));
+    camera.position.lerpVectors(introStart,introEnd,p);
+    camera.lookAt(0,0,0);
+    if(p>=1) introDone=true;
+  }
+
+  /* state advance */
+  stT+=dt;
+  if(stT>DURS[st]){
+    stT=0; st=(st+1)%STATES.length;
+    document.getElementById('phase').textContent=STATES[st];
+    document.getElementById('bar-fill').style.width='0';
+  }
+  document.getElementById('bar-fill').style.width=(clamp01(stT/DURS[st])*100)+'%';
+
+  /* global explosion progress */
+  let explP=0;
+  if(st===0) explP=0;
+  else if(st===1) explP=easeOut(clamp01(stT/DURS[1]));
+  else if(st===2) explP=1.0;
+  else if(st===3) explP=1.0-easeIn(clamp01(stT/DURS[3]));
+  else explP=0;
+
+  /* update components */
+  const tmp=new THREE.Vector3();
+  COMPS.forEach(comp=>{
+    const cpP=clamp01(easeIO(clamp01((explP-comp.delay)/(1-comp.delay*.5))));
+    tmp.copy(comp.asmPos).addScaledVector(comp.explodeVec,cpP);
+    comp.grp.position.copy(tmp);
+
+    const glow=cpP>.05?easeOut((cpP-.05)/.95):0;
+    comp.edgeMats.forEach(em=>{
+      if(em.bloom) em.mat.opacity=glow*.06;
+      else em.opacity=glow*.65;
+    });
+
+    const lblT=(st===2&&cpP>.88)?clamp01((stT-1.8)/2.0):0;
+    comp.labelMat.opacity=lerp(comp.labelMat.opacity,lblT,dt*2.5);
+  });
+
+  /* neon lights */
+  nA.intensity=explP*3.8;
+  nB.intensity=explP*2.2;
+  nC.intensity=explP*1.8;
+  nC.position.set(Math.sin(et*.6)*.5,Math.cos(et*.4)*.2,explP*.9);
+
+  /* LED strip on air outlet – always on when assembled */
+  const stripOn=(st===0||st===4)?1:1-explP*.5;
+  const pulse=.38+.28*Math.sin(et*1.7);
+  stripMats[0].opacity=pulse*stripOn;
+  stripMats[1].opacity=.22*pulse*stripOn;
+  stripMats[2].opacity=.07*pulse*stripOn;
+
+  /* orbit camera */
+  if(introDone){
+    if(autoOrbit){autoT+=dt;manY=autoT*.22;manX=Math.sin(autoT*.28)*.045;}
+    else{manY+=velY;manX+=velX;manX=Math.max(-.36,Math.min(.36,manX));velY*=.90;velX*=.90;}
+    const tgtR={0:5.8,1:6.8,2:7.6,3:6.5,4:5.5}[st]||6.0;
+    const tgtPhi={0:.26,1:.32,2:.38,3:.30,4:.22}[st]||.28;
+    camR.radius=lerp(camR.radius,tgtR,dt*1.2);
+    camR.phi=lerp(camR.phi,tgtPhi,dt*1.5);
+    camera.position.set(
+      Math.sin(manY)*Math.cos(camR.phi)*camR.radius,
+      Math.sin(camR.phi)*camR.radius+manX*1.4,
+      Math.cos(manY)*Math.cos(camR.phi)*camR.radius
+    );
+    camera.lookAt(0,.05,0);
+  }
+
+  /* gentle float */
+  unitGroup.position.y=Math.sin(et*.44)*.022;
+
+  /* PCB blink */
+  M.pcb.emissiveIntensity=.55+.35*Math.sin(et*3.2);
+
+  renderer.render(scene,camera);
+}
+animate();
+
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
